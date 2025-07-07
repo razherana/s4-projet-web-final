@@ -1,5 +1,6 @@
 <?php
 
+use app\controllers\EtablissementController;
 use flight\Engine;
 use flight\net\Router;
 
@@ -9,4 +10,8 @@ use flight\net\Router;
  */
 $router->get('/', function () {
   echo "Test";
+});
+
+$router->group('/etablissements', function () use ($router) {
+    $router->get('/', [EtablissementController::class, 'getAllEtablissements']);
 });
