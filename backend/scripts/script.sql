@@ -1,4 +1,4 @@
--- Active: 1738011862925@@127.0.0.1@3306@s4_exam_web
+-- Active: 1739989451833@@127.0.0.1@3306@s4_exam_web
 CREATE TABLE `s4_fonds` (
     `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `montant_initial` FLOAT(53) NOT NULL,
@@ -25,6 +25,8 @@ CREATE TABLE `s4_type_prets` (
 
 CREATE TABLE `s4_clients` (
     `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    `email` VARCHAR(255) NOT NULL,
+    `password` VARCHAR(255) NOT NULL,
     `nom` VARCHAR(255) NOT NULL,
     `prenom` VARCHAR(255) NOT NULL,
     `user_id` BIGINT NOT NULL
@@ -50,17 +52,14 @@ CREATE TABLE `s4_pret_retour_historiques` (
 
 CREATE TABLE `s4_users` (
     `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `email` VARCHAR(255) NOT NULL,
-    `password` VARCHAR(255) NOT NULL
+    `nom` VARCHAR(255) NOT NULL
 );
-
-ALTER TABLE `s4_users` ADD UNIQUE `s4_users_email_unique` (`email`);
 
 CREATE TABLE `s4_fond_historiques` (
     `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `fond_id` BIGINT NOT NULL,
     `description` VARCHAR(255) NOT NULL,
     `montant` FLOAT(53) NOT NULL,
-    `est_sortie` BOOLEAN NOT NULL DEFAULT '1',
+    `est_sortie` BOOLEAN NOT NULL DEFAULT 1,
     `date` DATETIME NOT NULL DEFAULT NOW()
 );
