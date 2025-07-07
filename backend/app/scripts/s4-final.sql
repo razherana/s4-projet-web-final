@@ -1,22 +1,23 @@
-CREATE TABLE `etablissements` (
-    `id` integer PRIMARY KEY,
+-- Active: 1738011862925@@127.0.0.1@3306@s4_exam_web
+CREATE TABLE `s4_final_etablissements` (
+    `id` integer PRIMARY KEY AUTO_INCREMENT,
     `nom` varchar(255)
 );
 
-CREATE TABLE `budgets` (
-    `id` integer PRIMARY KEY,
+CREATE TABLE `s4_final_budgets` (
+    `id` integer PRIMARY KEY AUTO_INCREMENT,
     `montant` float,
     `etablissement_id` int,
     `date` datetime
 );
 
-CREATE TABLE `type_users` (
-    `id` integer PRIMARY KEY,
+CREATE TABLE `s4_final_type_users` (
+    `id` integer PRIMARY KEY AUTO_INCREMENT,
     `nom` varchar(255)
 );
 
-CREATE TABLE `users` (
-    `id` integer PRIMARY KEY,
+CREATE TABLE `s4_final_users` (
+    `id` integer PRIMARY KEY AUTO_INCREMENT,
     `nom` varchar(255),
     `prenom` varchar(255),
     `email` varchar(255),
@@ -24,27 +25,15 @@ CREATE TABLE `users` (
     `type_user_id` integer
 );
 
-CREATE TABLE `type_prets` (
-    `id` integer PRIMARY KEY,
+CREATE TABLE `s4_final_type_prets` (
+    `id` integer PRIMARY KEY AUTO_INCREMENT,
     `nom` varchar(255),
     `taux` float
 );
 
-CREATE TABLE `prets` (
-    `id` integer PRIMARY KEY,
+CREATE TABLE `s4_final_prets` (
+    `id` integer PRIMARY KEY AUTO_INCREMENT,
     `type_pret_id` int,
     `user_id` int,
     `montant` float
 );
-
-ALTER TABLE `type_users`
-ADD FOREIGN KEY (`id`) REFERENCES `users` (`type_user_id`);
-
-ALTER TABLE `users`
-ADD FOREIGN KEY (`id`) REFERENCES `prets` (`user_id`);
-
-ALTER TABLE `type_prets`
-ADD FOREIGN KEY (`id`) REFERENCES `prets` (`type_pret_id`);
-
-ALTER TABLE `etablissements`
-ADD FOREIGN KEY (`id`) REFERENCES `budgets` (`etablissement_id`);
