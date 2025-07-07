@@ -56,50 +56,36 @@ class PretRetourHistoriquesController
     ]);
   }
 
-  public function create()
+  public function interets()
   {
-    $prets = $this->apiCall('/prets');
-
-    $content = $this->app->view()->fetch('pret_retour_historiques/create', [
-      'prets' => $prets
+    $config = $this->app->get('config');
+    
+    $content = $this->app->view()->fetch('pret_retour_historiques/interets', [
+      'config' => $config
     ]);
 
     $this->app->render('layout', [
-      'title' => 'Créer un Historique de Retour',
+      'title' => 'Calcul des Intérêts',
       'content' => $content
     ]);
   }
 
   public function store()
   {
-    $data = $this->app->request()->data->getData();
+    $input = file_get_contents('php://input');
+    $data = json_decode($input, true);
+    
     $result = $this->apiCall('/pret-retour-historiques', 'POST', $data);
-
-    $this->app->redirect('/pret-retour-historiques');
-  }
-
-  public function edit($id)
-  {
-    $pretRetourHistorique = $this->apiCall('/pret-retour-historiques/' . $id);
-    $prets = $this->apiCall('/prets');
-
-    $content = $this->app->view()->fetch('pret_retour_historiques/edit', [
-      'pretRetourHistorique' => $pretRetourHistorique,
-      'prets' => $prets
-    ]);
-
-    $this->app->render('layout', [
-      'title' => 'Modifier l\'Historique de Retour',
-      'content' => $content
-    ]);
+    $this->app->json($result);
   }
 
   public function update($id)
   {
-    $data = $this->app->request()->data->getData();
+    $input = file_get_contents('php://input');
+    $data = json_decode($input, true);
+    
     $result = $this->apiCall('/pret-retour-historiques/' . $id, 'PUT', $data);
-
-    $this->app->redirect('/pret-retour-historiques');
+    $this->app->json($result);
   }
 
   public function delete($id)

@@ -29,7 +29,8 @@
               <?php if ($typePrets): ?>
                 <?php foreach ($typePrets as $type): ?>
                   <option value="<?= $type['id'] ?>" <?= $type['id'] == $pret['type_pret_id'] ? 'selected' : '' ?>>
-                    <?= htmlspecialchars($type['nom']) ?> (<?= $type['taux_interet'] ?>%)
+                    <?= htmlspecialchars($type['nom']) ?> 
+                    (<?= $type['taux_interet'] ?>%<?= isset($type['taux_assurance']) && $type['taux_assurance'] > 0 ? ' + ' . $type['taux_assurance'] . '% assurance' : '' ?>)
                   </option>
                 <?php endforeach; ?>
               <?php endif; ?>

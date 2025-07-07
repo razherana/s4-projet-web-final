@@ -32,8 +32,27 @@ class SourceFonds
   public static function update($id, $data)
   {
     $db = getDB();
-    $stmt = $db->prepare("UPDATE s4_source_fonds SET nom = ? WHERE id = ?");
-    $stmt->execute([$data->nom, $id]);
+    
+    // Build dynamic update query based on non-null values
+    $updateFields = [];
+    $updateValues = [];
+    
+    if (isset($data->nom) && $data->nom !== null) {
+      $updateFields[] = "nom = ?";
+      $updateValues[] = $data->nom;
+    }
+    
+    // Only proceed if there are fields to update
+    if (empty($updateFields)) {
+      return; // No fields to update
+    }
+    
+    // Add the ID to the end of values array
+    $updateValues[] = $id;
+    
+    $sql = "UPDATE s4_source_fonds SET " . implode(", ", $updateFields) . " WHERE id = ?";
+    $stmt = $db->prepare($sql);
+    $stmt->execute($updateValues);
   }
 
   public static function delete($id)

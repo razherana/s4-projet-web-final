@@ -50,6 +50,11 @@
               </a>
             </li>
             <li class="nav-item">
+              <a class="nav-link" href="<?= route('/interets') ?>">
+                <i class="fas fa-chart-line"></i> Intérêts
+              </a>
+            </li>
+            <li class="nav-item">
               <a class="nav-link" href="<?= route('/users') ?>">
                 <i class="fas fa-user"></i> Users
               </a>

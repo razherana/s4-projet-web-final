@@ -10,6 +10,8 @@ use Tracy\Debugger;
  * @var Engine $app
  */
 
+session_start();
+
 define('FLIGHT_BASE_URL', $app->get('flight.base_url'));
 
 function route(string $url): string

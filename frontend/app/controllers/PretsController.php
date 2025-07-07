@@ -76,10 +76,11 @@ class PretsController
 
   public function store()
   {
-    $data = $this->app->request()->data->getData();
+    $input = file_get_contents('php://input');
+    $data = json_decode($input, true);
+    
     $result = $this->apiCall('/prets', 'POST', $data);
-
-    $this->app->redirect('/prets');
+    $this->app->json($result);
   }
 
   public function edit($id)
@@ -102,10 +103,11 @@ class PretsController
 
   public function update($id)
   {
-    $data = $this->app->request()->data->getData();
+    $input = file_get_contents('php://input');
+    $data = json_decode($input, true);
+    
     $result = $this->apiCall('/prets/' . $id, 'PUT', $data);
-
-    $this->app->redirect('/prets');
+    $this->app->json($result);
   }
 
   public function delete($id)

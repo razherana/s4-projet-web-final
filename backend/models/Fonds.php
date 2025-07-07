@@ -32,8 +32,37 @@ class Fonds
   public static function update($id, $data)
   {
     $db = getDB();
-    $stmt = $db->prepare("UPDATE s4_fonds SET montant_initial = ?, description = ?, source_fond_id = ? WHERE id = ?");
-    $stmt->execute([$data->montant_initial, $data->description, $data->source_fond_id, $id]);
+    
+    // Build dynamic update query based on non-null values
+    $updateFields = [];
+    $updateValues = [];
+    
+    if (isset($data->montant_initial) && $data->montant_initial !== null) {
+      $updateFields[] = "montant_initial = ?";
+      $updateValues[] = $data->montant_initial;
+    }
+    
+    if (isset($data->description) && $data->description !== null) {
+      $updateFields[] = "description = ?";
+      $updateValues[] = $data->description;
+    }
+    
+    if (isset($data->source_fond_id) && $data->source_fond_id !== null) {
+      $updateFields[] = "source_fond_id = ?";
+      $updateValues[] = $data->source_fond_id;
+    }
+    
+    // Only proceed if there are fields to update
+    if (empty($updateFields)) {
+      return; // No fields to update
+    }
+    
+    // Add the ID to the end of values array
+    $updateValues[] = $id;
+    
+    $sql = "UPDATE s4_fonds SET " . implode(", ", $updateFields) . " WHERE id = ?";
+    $stmt = $db->prepare($sql);
+    $stmt->execute($updateValues);
   }
 
   public static function delete($id)

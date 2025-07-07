@@ -47,7 +47,7 @@ CREATE TABLE `s4_pret_retour_historiques` (
     `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `pret_id` BIGINT NOT NULL,
     `montant` FLOAT(53) NOT NULL,
-    `date_retour` BIGINT NOT NULL
+    `date_retour` DATE NOT NULL
 );
 
 CREATE TABLE `s4_users` (

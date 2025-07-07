@@ -2,6 +2,8 @@
 
 use flight\Engine;
 use flight\net\Router;
+use app\controllers\AuthController;
+use app\controllers\AdminController;
 use app\controllers\FondsController;
 use app\controllers\SourceFondsController;
 use app\controllers\TypePretsController;
@@ -16,10 +18,39 @@ use app\controllers\FondHistoriquesController;
  * @var Engine $app
  */
 
+// Auth routes
+$router->get('/login', [AuthController::class, 'showLogin']);
+$router->post('/login', [AuthController::class, 'login']);
+$router->get('/logout', [AuthController::class, 'logout']);
+
 // Home redirect
 $router->get('/', function () use ($app) {
-  $app->redirect('/fonds');
+  if (isset($_SESSION['user'])) {
+    if ($_SESSION['user']['user_id'] === 1) {
+      $app->redirect('/admin');
+    } else {
+      $app->redirect('/client');
+    }
+  } else {
+    $app->redirect('/login');
+  }
 });
+
+// Protected admin routes
+$router->group('/admin', function() use ($router, $app) {
+  $router->get('/', function () use ($app) {
+    $app->redirect('/admin/dashboard');
+  });
+  $router->get('/dashboard', [AdminController::class, 'dashboard']);
+  $router->get('/interets', [AdminController::class, 'interets']);
+  $router->get('/prets', [AdminController::class, 'prets']);
+  $router->post('/prets/create', [AdminController::class, 'createLoan']);
+  $router->get('/clients', [AdminController::class, 'clients']);
+  $router->post('/clients/create', [AdminController::class, 'createClient']);
+  $router->post('/clients/payment', [AdminController::class, 'processPayment']);
+  $router->get('/fonds', [AdminController::class, 'fonds']);
+  $router->get('/settings', [AdminController::class, 'settings']);
+}, [AuthController::class, 'requireAdmin']);
 
 // Fonds routes
 $router->get('/fonds', [FondsController::class, 'list']);
@@ -57,6 +88,9 @@ $router->post('/pret-retour-historiques', [PretRetourHistoriquesController::clas
 $router->put('/pret-retour-historiques/@id', [PretRetourHistoriquesController::class, 'update']);
 $router->delete('/pret-retour-historiques/@id', [PretRetourHistoriquesController::class, 'delete']);
 
+// Interets route
+$router->get('/interets', [PretRetourHistoriquesController::class, 'interets']);
+
 // Users routes
 $router->get('/users', [UsersController::class, 'list']);
 $router->post('/users', [UsersController::class, 'store']);
@@ -68,3 +102,5 @@ $router->get('/fond-historiques', [FondHistoriquesController::class, 'list']);
 $router->post('/fond-historiques', [FondHistoriquesController::class, 'store']);
 $router->put('/fond-historiques/@id', [FondHistoriquesController::class, 'update']);
 $router->delete('/fond-historiques/@id', [FondHistoriquesController::class, 'delete']);
+$router->get('/fond-historiques/create', [FondHistoriquesController::class, 'create']);
+$router->post('/fond-historiques/create', [FondHistoriquesController::class, 'store']);

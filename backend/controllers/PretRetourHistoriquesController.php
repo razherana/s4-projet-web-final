@@ -43,4 +43,26 @@ class PretRetourHistoriquesController
     PretRetourHistoriques::delete($id);
     Flight::json(['message' => 'Historique de retour supprimé']);
   }
+
+  public static function getInterets()
+  {
+    $data = Flight::request()->query;
+    $mois1 = $data->mois1 ?? null;
+    $annee1 = $data->annee1 ?? null;
+
+    $mois2 = $data->mois2 ?? null;
+    $annee2 = $data->annee2 ?? null;
+
+    if (!$mois1 || !$annee1) {
+      Flight::json(['error' => 'Mois et année de début requis'], 400);
+      return;
+    }
+
+    try {
+      $interets = PretRetourHistoriques::getInterets($mois1, $annee1, $mois2, $annee2);
+      Flight::json($interets);
+    } catch (\Throwable $th) {
+      Flight::json(['error' => $th->getMessage()], 500);
+    }
+  }
 }

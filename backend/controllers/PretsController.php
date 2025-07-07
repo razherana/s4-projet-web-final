@@ -18,6 +18,15 @@ class PretsController
     }
   }
 
+  public static function getAllByClient(int $id) {
+    try {
+      $prets = Prets::getAllByClient($id);
+      Flight::json($prets);
+    } catch (\Throwable $th) {
+      echo $th->getMessage();
+    }
+  }
+
   public static function getById($id)
   {
     $prets = Prets::getById($id);
@@ -42,5 +51,15 @@ class PretsController
   {
     Prets::delete($id);
     Flight::json(['message' => 'Prêt supprimé']);
+  }
+
+  public static function getPaymentSchedule($id)
+  {
+    try {
+      $schedule = Prets::getMontantAPayer($id);
+      Flight::json($schedule);
+    } catch (\Throwable $th) {
+      Flight::json(['error' => $th->getMessage()], 500);
+    }
   }
 }

@@ -17,6 +17,11 @@
           </div>
 
           <div class="mb-3">
+            <label for="taux_assurance" class="form-label">Taux d'Assurance (%)</label>
+            <input type="number" step="0.01" class="form-control" id="taux_assurance" name="taux_assurance" value="0">
+          </div>
+
+          <div class="mb-3">
             <label for="duree_min" class="form-label">Durée Minimale (mois)</label>
             <input type="number" class="form-control" id="duree_min" name="duree_min" required>
           </div>

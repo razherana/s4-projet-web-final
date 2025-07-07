@@ -24,16 +24,55 @@ class TypePrets
   public static function create($data)
   {
     $db = getDB();
-    $stmt = $db->prepare("INSERT INTO s4_type_prets (nom, taux_interet, duree_min, duree_max) VALUES (?, ?, ?, ?)");
-    $stmt->execute([$data->nom, $data->taux_interet, $data->duree_min, $data->duree_max]);
+    $stmt = $db->prepare("INSERT INTO s4_type_prets (nom, taux_interet, duree_min, duree_max, taux_assurance) VALUES (?, ?, ?, ?, ?)");
+    $stmt->execute([$data->nom, $data->taux_interet, $data->duree_min, $data->duree_max, $data->taux_assurance]);
     return $db->lastInsertId();
   }
 
   public static function update($id, $data)
   {
     $db = getDB();
-    $stmt = $db->prepare("UPDATE s4_type_prets SET nom = ?, taux_interet = ?, duree_min = ?, duree_max = ? WHERE id = ?");
-    $stmt->execute([$data->nom, $data->taux_interet, $data->duree_min, $data->duree_max, $id]);
+    
+    // Build dynamic update query based on non-null values
+    $updateFields = [];
+    $updateValues = [];
+    
+    if (isset($data->nom) && $data->nom !== null) {
+      $updateFields[] = "nom = ?";
+      $updateValues[] = $data->nom;
+    }
+    
+    if (isset($data->taux_interet) && $data->taux_interet !== null) {
+      $updateFields[] = "taux_interet = ?";
+      $updateValues[] = $data->taux_interet;
+    }
+    
+    if (isset($data->duree_min) && $data->duree_min !== null) {
+      $updateFields[] = "duree_min = ?";
+      $updateValues[] = $data->duree_min;
+    }
+    
+    if (isset($data->duree_max) && $data->duree_max !== null) {
+      $updateFields[] = "duree_max = ?";
+      $updateValues[] = $data->duree_max;
+    }
+    
+    if (isset($data->taux_assurance) && $data->taux_assurance !== null) {
+      $updateFields[] = "taux_assurance = ?";
+      $updateValues[] = $data->taux_assurance;
+    }
+    
+    // Only proceed if there are fields to update
+    if (empty($updateFields)) {
+      return; // No fields to update
+    }
+    
+    // Add the ID to the end of values array
+    $updateValues[] = $id;
+    
+    $sql = "UPDATE s4_type_prets SET " . implode(", ", $updateFields) . " WHERE id = ?";
+    $stmt = $db->prepare($sql);
+    $stmt->execute($updateValues);
   }
 
   public static function delete($id)

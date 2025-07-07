@@ -43,12 +43,14 @@ class FondsController
   public function list()
   {
     $fonds = $this->apiCall('/fonds');
+
     $sourceFonds = $this->apiCall('/source-fonds');
 
     $content = $this->app->view()->fetch('fonds/list', [
       'fonds' => $fonds,
       'sourceFonds' => $sourceFonds
     ]);
+
 
     $this->app->render('layout', [
       'title' => 'Gestion des Fonds',

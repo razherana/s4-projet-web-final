@@ -12,6 +12,7 @@
         <th>ID</th>
         <th>Nom</th>
         <th>Taux d'Intérêt (%)</th>
+        <th>Taux d'Assurance (%)</th>
         <th>Durée Min (mois)</th>
         <th>Durée Max (mois)</th>
         <th>Actions</th>
@@ -20,7 +21,7 @@
     <tbody>
       <?php if (empty($typePrets)): ?>
         <tr>
-          <td colspan="6" class="text-center">Aucun type de prêt trouvé</td>
+          <td colspan="7" class="text-center">Aucun type de prêt trouvé</td>
         </tr>
       <?php else: ?>
         <?php foreach ($typePrets as $typePret): ?>
@@ -28,6 +29,7 @@
             <td><?= $typePret['id'] ?></td>
             <td><?= htmlspecialchars($typePret['nom']) ?></td>
             <td><?= number_format($typePret['taux_interet'], 2) ?>%</td>
+            <td><?= number_format($typePret['taux_assurance'] ?? 0, 2) ?>%</td>
             <td><?= $typePret['duree_min'] ?></td>
             <td><?= $typePret['duree_max'] ?></td>
             <td>
@@ -62,6 +64,10 @@
           <div class="mb-3">
             <label for="create_taux_interet" class="form-label">Taux d'Intérêt (%)</label>
             <input type="number" step="0.01" class="form-control" id="create_taux_interet" name="taux_interet" required>
+          </div>
+          <div class="mb-3">
+            <label for="create_taux_assurance" class="form-label">Taux d'Assurance (%)</label>
+            <input type="number" step="0.01" class="form-control" id="create_taux_assurance" name="taux_assurance" value="0">
           </div>
           <div class="mb-3">
             <label for="create_duree_min" class="form-label">Durée Minimale (mois)</label>
@@ -99,6 +105,10 @@
           <div class="mb-3">
             <label for="edit_taux_interet" class="form-label">Taux d'Intérêt (%)</label>
             <input type="number" step="0.01" class="form-control" id="edit_taux_interet" name="taux_interet" required>
+          </div>
+          <div class="mb-3">
+            <label for="edit_taux_assurance" class="form-label">Taux d'Assurance (%)</label>
+            <input type="number" step="0.01" class="form-control" id="edit_taux_assurance" name="taux_assurance">
           </div>
           <div class="mb-3">
             <label for="edit_duree_min" class="form-label">Durée Minimale (mois)</label>
@@ -163,6 +173,7 @@
     document.getElementById('edit_id').value = typePret.id;
     document.getElementById('edit_nom').value = typePret.nom;
     document.getElementById('edit_taux_interet').value = typePret.taux_interet;
+    document.getElementById('edit_taux_assurance').value = typePret.taux_assurance || 0;
     document.getElementById('edit_duree_min').value = typePret.duree_min;
     document.getElementById('edit_duree_max').value = typePret.duree_max;
     new bootstrap.Modal(document.getElementById('editModal')).show();
