@@ -4,10 +4,10 @@ global $db;
 
 function getDB()
 {
-  $host = 'localhost';
-  $dbname = 'test_s4_web';
-  $username = 'razherana';
-  $password = '';
+  $host = HOST;
+  $dbname = DB_NAME;
+  $username = USER;
+  $password = PASSWORD;
 
   try {
     global $db;
