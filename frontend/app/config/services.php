@@ -12,9 +12,13 @@ use Tracy\Debugger;
 
 define('FLIGHT_BASE_URL', $app->get('flight.base_url'));
 
-function route(string $url) : string {
+function route(string $url): string
+{
   return FLIGHT_BASE_URL . $url;
 }
+
+// Set config in app for controllers to access
+$app->set('config', $config);
 
 // Uncomment the following line for MySQL
 // $dsn = 'mysql:host=' . $config['database']['host'] . ';dbname=' . $config['database']['dbname'] . ';charset=utf8mb4';

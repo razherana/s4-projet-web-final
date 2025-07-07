@@ -4,7 +4,6 @@ namespace controllers;
 
 use Flight;
 use models\Etudiant;
-use Utils;
 
 class EtudiantController
 {
@@ -28,7 +27,6 @@ class EtudiantController
   {
     $data = Flight::request()->data;
     $id = Etudiant::create($data);
-    $dateFormatted = Utils::formatDate('2025-01-01');
     Flight::json(['message' => 'Étudiant ajouté', 'id' => $id]);
   }
 

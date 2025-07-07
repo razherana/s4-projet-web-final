@@ -14,8 +14,24 @@ class ComposerStaticInitabb6ebe33cbb979ad3a0d50b308f9c90
     public static $classMap = array (
         'Composer\\InstalledVersions' => __DIR__ . '/..' . '/composer/InstalledVersions.php',
         'Utils' => __DIR__ . '/../..' . '/helpers/Utils.php',
+        'controllers\\ClientsController' => __DIR__ . '/../..' . '/controllers/ClientsController.php',
         'controllers\\EtudiantController' => __DIR__ . '/../..' . '/controllers/EtudiantController.php',
+        'controllers\\FondHistoriquesController' => __DIR__ . '/../..' . '/controllers/FondHistoriquesController.php',
+        'controllers\\FondsController' => __DIR__ . '/../..' . '/controllers/FondsController.php',
+        'controllers\\PretRetourHistoriquesController' => __DIR__ . '/../..' . '/controllers/PretRetourHistoriquesController.php',
+        'controllers\\PretsController' => __DIR__ . '/../..' . '/controllers/PretsController.php',
+        'controllers\\SourceFondsController' => __DIR__ . '/../..' . '/controllers/SourceFondsController.php',
+        'controllers\\TypePretsController' => __DIR__ . '/../..' . '/controllers/TypePretsController.php',
+        'controllers\\UsersController' => __DIR__ . '/../..' . '/controllers/UsersController.php',
+        'models\\Clients' => __DIR__ . '/../..' . '/models/Clients.php',
         'models\\Etudiant' => __DIR__ . '/../..' . '/models/Etudiant.php',
+        'models\\FondHistoriques' => __DIR__ . '/../..' . '/models/FondHistoriques.php',
+        'models\\Fonds' => __DIR__ . '/../..' . '/models/Fonds.php',
+        'models\\PretRetourHistoriques' => __DIR__ . '/../..' . '/models/PretRetourHistoriques.php',
+        'models\\Prets' => __DIR__ . '/../..' . '/models/Prets.php',
+        'models\\SourceFonds' => __DIR__ . '/../..' . '/models/SourceFonds.php',
+        'models\\TypePrets' => __DIR__ . '/../..' . '/models/TypePrets.php',
+        'models\\Users' => __DIR__ . '/../..' . '/models/Users.php',
     );
 
     public static function getInitializer(ClassLoader $loader)
