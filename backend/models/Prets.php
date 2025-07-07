@@ -9,7 +9,7 @@ class Prets
   public static function getAll()
   {
     $db = getDB();
-    $stmt = $db->query("SELECT * FROM s4_prets");
+    $stmt = $db->query("SELECT s4_prets.*, taux_interet, taux_assurance FROM s4_prets JOIN s4_type_prets ON s4_prets.type_pret_id = s4_type_prets.id");
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
   }
 

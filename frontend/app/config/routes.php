@@ -4,6 +4,7 @@ use flight\Engine;
 use flight\net\Router;
 use app\controllers\AuthController;
 use app\controllers\AdminController;
+use app\controllers\ClientController;
 use app\controllers\FondsController;
 use app\controllers\SourceFondsController;
 use app\controllers\TypePretsController;
@@ -25,11 +26,12 @@ $router->get('/logout', [AuthController::class, 'logout']);
 
 // Home redirect
 $router->get('/', function () use ($app) {
+  
   if (isset($_SESSION['user'])) {
-    if ($_SESSION['user']['user_id'] === 1) {
-      $app->redirect('/admin');
+    if ($_SESSION['user']['role'] === 'admin') {
+      $app->redirect('/admin/dashboard');
     } else {
-      $app->redirect('/client');
+      $app->redirect('/client/dashboard');
     }
   } else {
     $app->redirect('/login');
@@ -51,6 +53,18 @@ $router->group('/admin', function() use ($router, $app) {
   $router->get('/fonds', [AdminController::class, 'fonds']);
   $router->get('/settings', [AdminController::class, 'settings']);
 }, [AuthController::class, 'requireAdmin']);
+
+// Protected client routes
+$router->group('/client', function() use ($router, $app) {
+  $router->get('/', function () use ($app) {
+    $app->redirect('/client/dashboard');
+  });
+  $router->get('/dashboard', [ClientController::class, 'dashboard']);
+  $router->get('/loans', [ClientController::class, 'loans']);
+  $router->post('/loans', [ClientController::class, 'processPayment']);
+  $router->get('/simulate', [ClientController::class, 'simulate']);
+  $router->post('/loans/create', [ClientController::class, 'createLoan']);
+}, [AuthController::class, 'requireAuth']);
 
 // Fonds routes
 $router->get('/fonds', [FondsController::class, 'list']);
