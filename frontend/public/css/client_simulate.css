@@ -791,3 +791,29 @@
     gap: 1rem;
   }
 }
+
+.simulation-card.saved {
+  border-color: var(--accent-color);
+  background: linear-gradient(135deg, #F0FDF4, #E2E8F0);
+}
+
+.saved-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  background: var(--accent-color);
+  color: white;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.simulations-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid var(--border-color);
+}

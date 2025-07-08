@@ -16,6 +16,7 @@ require 'routes/pret_retour_historiques_routes.php';
 require 'routes/users_routes.php';
 require 'routes/fond_historiques_routes.php';
 require 'routes/pdf_export_routes.php';
+require 'routes/simulations_routes.php';
 
 // Handle CORS preflight requests (OPTIONS method)
 Flight::route('OPTIONS /*', function() {

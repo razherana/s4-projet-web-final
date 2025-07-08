@@ -19,6 +19,7 @@ CREATE TABLE `s4_type_prets` (
     `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `nom` VARCHAR(255) NOT NULL,
     `taux_interet` FLOAT(53) NOT NULL,
+    `taux_assurance` FLOAT(53) NOT NULL, 
     `duree_min` FLOAT(53) NOT NULL,
     `duree_max` FLOAT(53) NOT NULL
 );
@@ -40,7 +41,18 @@ CREATE TABLE `s4_prets` (
     `duree` BIGINT NOT NULL,
     `date_acceptation` DATETIME NULL,
     `date_refus` DATETIME NULL,
-    `date_creation` DATETIME NOT NULL
+    `date_creation` DATETIME NOT NULL,
+    `delai` INT DEFAULT 0
+);
+
+CREATE TABLE `s4_simulations` (
+    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    `client_id` BIGINT NOT NULL,
+    `type_pret_id` BIGINT NOT NULL,
+    `montant` BIGINT NOT NULL,
+    `duree` BIGINT NOT NULL,
+    `date_creation` DATETIME NOT NULL,
+    `delai` INT DEFAULT 0
 );
 
 CREATE TABLE `s4_pret_retour_historiques` (

@@ -67,7 +67,17 @@ $router->group('/client', function() use ($router, $app) {
   $router->post('/loans', [ClientController::class, 'processPayment']);
   $router->get('/simulate', [ClientController::class, 'simulate']);
   $router->post('/loans/create', [ClientController::class, 'createLoan']);
+  
+  // Simulation routes
+  $router->post('/simulations/save', [ClientController::class, 'saveSimulation']);
+  $router->delete('/simulations/@id', [ClientController::class, 'deleteSimulation']);
+  $router->delete('/simulations/clear', [ClientController::class, 'clearSimulations']);
+
 }, [ClientMiddleware::class]);
+
+$router->get('/api/simulations/my-simulations', [ClientController::class, 'getMySimulationsAPI'])->addMiddleware(ClientMiddleware::class);
+
+// API routes for simulations (accessible to authenticated clients)
 
 // Fonds routes
 $router->get('/fonds', [FondsController::class, 'list']);

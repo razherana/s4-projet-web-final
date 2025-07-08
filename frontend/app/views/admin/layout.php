@@ -517,22 +517,6 @@
               <span>Clients</span>
             </a>
           </div>
-          <div class="nav-item">
-            <a class="nav-link <?= strpos($_SERVER['REQUEST_URI'], '/admin/fonds') !== false ? 'active' : '' ?>" href="<?= route('/admin/fonds') ?>">
-              <i class="fas fa-money-bill-wave"></i>
-              <span>Fonds</span>
-            </a>
-          </div>
-        </div>
-
-        <div class="nav-section">
-          <div class="nav-section-title">Système</div>
-          <div class="nav-item">
-            <a class="nav-link <?= strpos($_SERVER['REQUEST_URI'], '/admin/settings') !== false ? 'active' : '' ?>" href="<?= route('/admin/settings') ?>">
-              <i class="fas fa-cog"></i>
-              <span>Paramètres</span>
-            </a>
-          </div>
         </div>
 
         <div class="nav-section">

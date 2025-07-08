@@ -42,28 +42,28 @@ class ClientController
   {
     $currentUser = $_SESSION['user'];
     $clientId = $currentUser['id'];
-    
+
     // Get client's loans
     $allPrets = $this->apiCall('/prets');
-    $clientPrets = array_filter($allPrets ?? [], function($pret) use ($clientId) {
+    $clientPrets = array_filter($allPrets ?? [], function ($pret) use ($clientId) {
       return $pret['client_id'] == $clientId;
     });
-    
+
     // Calculate metrics
     $totalPrets = count($clientPrets);
-    $activePrets = count(array_filter($clientPrets, function($pret) {
+    $activePrets = count(array_filter($clientPrets, function ($pret) {
       return !empty($pret['date_acceptation']) && empty($pret['date_refus']);
     }));
-    $pendingPrets = count(array_filter($clientPrets, function($pret) {
+    $pendingPrets = count(array_filter($clientPrets, function ($pret) {
       return empty($pret['date_acceptation']) && empty($pret['date_refus']);
     }));
-    $rejectedPrets = count(array_filter($clientPrets, function($pret) {
+    $rejectedPrets = count(array_filter($clientPrets, function ($pret) {
       return !empty($pret['date_refus']);
     }));
-    
+
     // Calculate total amount
     $totalMontant = array_sum(array_column($clientPrets, 'montant'));
-    
+
     $config = $this->app->get('config');
 
     $content = $this->app->view()->fetch('client/dashboard', [
@@ -88,17 +88,17 @@ class ClientController
   {
     $currentUser = $_SESSION['user'];
     $clientId = $currentUser['id'];
-    
+
     $allPrets = $this->apiCall('/prets');
-    $clientPrets = array_filter($allPrets ?? [], function($pret) use ($clientId) {
+    $clientPrets = array_filter($allPrets ?? [], function ($pret) use ($clientId) {
       return $pret['client_id'] == $clientId;
     });
-    
+
     // Sort loans by date (most recent first)
-    usort($clientPrets, function($a, $b) {
+    usort($clientPrets, function ($a, $b) {
       return strtotime($b['date_creation']) - strtotime($a['date_creation']);
     });
-    
+
     $typePrets = $this->apiCall('/type-prets');
     $config = $this->app->get('config');
 
@@ -118,11 +118,16 @@ class ClientController
 
   public function simulate()
   {
+    $currentUser = $_SESSION['user'];
+    $clientId = $currentUser['id'];
+
     $typePrets = $this->apiCall('/type-prets');
+    $simulations = $this->apiCall("/simulations/client/{$clientId}");
     $config = $this->app->get('config');
 
     $content = $this->app->view()->fetch('client/simulate', [
       'typePrets' => $typePrets,
+      'simulations' => $simulations ?? [],
       'config' => $config
     ]);
 
@@ -136,7 +141,7 @@ class ClientController
   public function createLoan()
   {
     $currentUser = $_SESSION['user'];
-    
+
     $typePretId = $_POST['type_pret_id'] ?? null;
     $montant = $_POST['montant'] ?? null;
     $duree = $_POST['duree'] ?? null;
@@ -162,7 +167,7 @@ class ClientController
       ];
 
       $result = $this->apiCall('/prets', 'POST', $loanData);
-      
+
       if ($result && !isset($result['error'])) {
         $this->app->redirect('/client/simulate?success=loan_created');
       } else {
@@ -176,7 +181,7 @@ class ClientController
   public function processPayment()
   {
     $currentUser = $_SESSION['user'];
-    
+
     $pretId = $_POST['pret_id'] ?? null;
     $montant = $_POST['montant'] ?? null;
     $dateRetour = $_POST['date_retour'] ?? null;
@@ -194,7 +199,7 @@ class ClientController
 
     try {
       $result = $this->apiCall('/pret-retour-historiques', 'POST', $paymentData);
-      
+
       if ($result && !isset($result['error'])) {
         $this->app->redirect('/client/loans?success=payment_successful');
       } else {
@@ -203,5 +208,96 @@ class ClientController
     } catch (\Exception $e) {
       $this->app->redirect('/client/loans?error=payment_error');
     }
+  }
+
+  public function saveSimulation()
+  {
+    $currentUser = $_SESSION['user'];
+
+    $typePretId = $_POST['type_pret_id'] ?? null;
+    $montant = $_POST['montant'] ?? null;
+    $duree = $_POST['duree'] ?? null;
+    $dateCreation = $_POST['date_creation'] ?? date('Y-m-d H:i:s');
+    $delai = $_POST['delai'] ?? 0;
+
+    if (!$typePretId || !$montant || !$duree) {
+      $this->app->json(['error' => 'missing_data'], 400);
+      return;
+    }
+
+    try {
+      $simulationData = [
+        'client_id' => (int)$currentUser['id'],
+        'type_pret_id' => (int)$typePretId,
+        'montant' => (float)$montant,
+        'duree' => (int)$duree,
+        'date_creation' => $dateCreation,
+        'delai' => (int)$delai
+      ];
+
+      $result = $this->apiCall('/simulations', 'POST', $simulationData);
+
+      if ($result && !isset($result['error'])) {
+        $this->app->json(['success' => true, 'message' => 'Simulation sauvegardée', 'id' => $result['id']]);
+      } else {
+        $this->app->json(['error' => 'simulation_creation_failed'], 400);
+      }
+    } catch (\Exception $e) {
+      $this->app->json(['error' => 'simulation_creation_error'], 500);
+    }
+  }
+
+  public function deleteSimulation($id)
+  {
+    $currentUser = $_SESSION['user'];
+
+    try {
+      // First verify the simulation belongs to the current user
+      $simulation = $this->apiCall("/simulations/{$id}");
+      if (!$simulation || $simulation['client_id'] != $currentUser['id']) {
+        $this->app->json(['error' => 'unauthorized'], 403);
+        return;
+      }
+
+      $result = $this->apiCall("/simulations/{$id}", 'DELETE');
+
+      if ($result && !isset($result['error'])) {
+        $this->app->json(['success' => true, 'message' => 'Simulation supprimée']);
+      } else {
+        $this->app->json(['error' => 'simulation_deletion_failed'], 400);
+      }
+    } catch (\Exception $e) {
+      $this->app->json(['error' => 'simulation_deletion_error'], 500);
+    }
+  }
+
+  public function clearSimulations()
+  {
+    $currentUser = $_SESSION['user'];
+
+    try {
+      $result = $this->apiCall("/simulations/client/{$currentUser['id']}", 'DELETE');
+
+      if ($result && !isset($result['error'])) {
+        $this->app->json(['success' => true, 'message' => 'Toutes les simulations supprimées']);
+      } else {
+        $this->app->json(['error' => 'simulations_deletion_failed'], 400);
+      }
+    } catch (\Exception $e) {
+      $this->app->json(['error' => 'simulations_deletion_error'], 500);
+    }
+  }
+
+  public function getMySimulationsAPI()
+  {
+    if (!isset($_SESSION['user'])) {
+      $this->app->json(['error' => 'Unauthorized'], 401);
+      return;
+    }
+
+    $currentUser = $_SESSION['user'];
+    $clientId = $currentUser['id'];
+
+    $this->app->json($this->apiCall("/simulations/client/{$clientId}"));
   }
 }
