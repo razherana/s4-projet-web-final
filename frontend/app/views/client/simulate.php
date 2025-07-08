@@ -1,3 +1,5 @@
+<link rel="stylesheet" href="<?= route('/css/client_simulate.css') ?>">
+
 <div class="simulate-dashboard">
   <!-- Header Section -->
   <section class="simulate-header">
@@ -40,6 +42,27 @@
       <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
   <?php endif; ?>
+
+  <!-- Active Simulations Section -->
+  <section class="simulations-section" id="simulationsSection" style="display: none;">
+    <div class="simulations-card">
+      <div class="simulations-header">
+        <h3 class="simulations-title">
+          <i class="fas fa-list"></i>
+          Simulations Actives
+        </h3>
+        <p class="simulations-subtitle">Gérez vos simulations de prêt</p>
+        <button type="button" class="btn-clear-all" onclick="clearAllSimulations()">
+          <i class="fas fa-trash"></i>
+          Tout effacer
+        </button>
+      </div>
+      
+      <div class="simulations-grid" id="simulationsGrid">
+        <!-- Populated by JavaScript -->
+      </div>
+    </div>
+  </section>
 
   <!-- Loan Form Section -->
   <section class="loan-form-section">
@@ -111,9 +134,9 @@
           
           <div class="form-group">
             <div class="simulation-actions">
-              <button type="button" class="btn-simulate" onclick="calculatePayment()">
-                <i class="fas fa-calculator"></i>
-                <span>Simuler</span>
+              <button type="button" class="btn-simulate" onclick="addSimulation()">
+                <i class="fas fa-plus"></i>
+                <span>Ajouter Simulation</span>
               </button>
               <button type="button" class="btn-reset" onclick="resetForm()">
                 <i class="fas fa-undo"></i>
@@ -212,572 +235,10 @@
   </section>
 </div>
 
-<style>
-.simulate-dashboard {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-  padding: 0;
-}
-
-/* Header Section */
-.simulate-header {
-  margin-bottom: 1rem;
-}
-
-.header-card {
-  background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-  color: white;
-  border-radius: 16px;
-  padding: 2rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  position: relative;
-  overflow: hidden;
-  box-shadow: var(--card-shadow-hover);
-}
-
-.header-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 150px;
-  height: 150px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 50%;
-  transform: translate(50px, -50px);
-}
-
-.header-content {
-  position: relative;
-  z-index: 2;
-}
-
-.header-title {
-  font-size: 1.75rem;
-  font-weight: 700;
-  margin: 0 0 0.5rem 0;
-}
-
-.header-subtitle {
-  font-size: 1rem;
-  opacity: 0.9;
-  margin: 0;
-}
-
-.header-icon {
-  font-size: 3rem;
-  opacity: 0.3;
-  position: relative;
-  z-index: 1;
-}
-
-/* Alerts */
-.alert {
-  margin-bottom: 1.5rem;
-  padding: 1rem 1.5rem;
-  border-radius: 12px;
-  border: none;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.alert-success {
-  background: rgba(16, 185, 129, 0.1);
-  color: var(--accent-color);
-  border-left: 4px solid var(--accent-color);
-}
-
-.alert-danger {
-  background: rgba(239, 68, 68, 0.1);
-  color: #EF4444;
-  border-left: 4px solid #EF4444;
-}
-
-.btn-close {
-  background: none;
-  border: none;
-  font-size: 1.2rem;
-  cursor: pointer;
-  margin-left: auto;
-  opacity: 0.7;
-}
-
-.btn-close:hover {
-  opacity: 1;
-}
-
-/* Form Section */
-.loan-form-section {
-  margin-bottom: 1rem;
-}
-
-.form-card {
-  background: white;
-  border-radius: 16px;
-  padding: 2rem;
-  box-shadow: var(--card-shadow);
-  border: 1px solid var(--border-color);
-}
-
-.form-header {
-  margin-bottom: 2rem;
-  text-align: center;
-}
-
-.form-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 0 0 0.5rem 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-}
-
-.form-subtitle {
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-  margin: 0;
-}
-
-.loan-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.form-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1.5rem;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.form-label {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 0.5rem;
-}
-
-.form-control {
-  padding: 0.875rem 1rem;
-  border: 2px solid var(--border-color);
-  border-radius: 12px;
-  font-size: 0.875rem;
-  transition: all 0.2s ease;
-  background: white;
-}
-
-.form-control:focus {
-  outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-.form-help {
-  font-size: 0.75rem;
-  color: var(--text-secondary);
-  margin-top: 0.25rem;
-}
-
-.simulation-actions {
-  display: flex;
-  gap: 1rem;
-  margin-top: 1.5rem;
-}
-
-.btn-simulate,
-.btn-reset {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.875rem 1.5rem;
-  border: none;
-  border-radius: 12px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.btn-simulate {
-  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
-  color: white;
-  flex: 1;
-}
-
-.btn-simulate:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-}
-
-.btn-reset {
-  background: #E5E7EB;
-  color: var(--text-secondary);
-}
-
-.btn-reset:hover {
-  background: #D1D5DB;
-  transform: translateY(-1px);
-}
-
-/* Preview Section */
-.preview-section {
-  flex: 1;
-}
-
-.preview-card {
-  background: white;
-  border-radius: 16px;
-  padding: 2rem;
-  box-shadow: var(--card-shadow);
-  border: 1px solid var(--border-color);
-}
-
-.preview-header {
-  margin-bottom: 2rem;
-  text-align: center;
-}
-
-.preview-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 0 0 0.5rem 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-}
-
-.preview-subtitle {
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-  margin: 0;
-}
-
-/* Summary Cards */
-.summary-section {
-  margin-bottom: 2rem;
-}
-
-.summary-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.5rem;
-}
-
-.summary-item {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1.5rem;
-  border-radius: 12px;
-  box-shadow: var(--card-shadow);
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-}
-
-.summary-item::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: var(--primary-color);
-}
-
-.summary-item.success::before { background: var(--accent-color); }
-.summary-item.warning::before { background: #F59E0B; }
-.summary-item.info::before { background: var(--secondary-color); }
-
-.summary-item:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--card-shadow-hover);
-}
-
-.summary-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.25rem;
-  flex-shrink: 0;
-}
-
-.summary-item.success .summary-icon {
-  background: linear-gradient(135deg, var(--accent-color), #059669);
-}
-
-.summary-item.warning .summary-icon {
-  background: linear-gradient(135deg, #F59E0B, #D97706);
-}
-
-.summary-item.info .summary-icon {
-  background: linear-gradient(135deg, var(--secondary-color), #4F46E5);
-}
-
-.summary-content {
-  flex: 1;
-}
-
-.summary-value {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 0.25rem;
-  line-height: 1;
-}
-
-.summary-label {
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-  font-weight: 500;
-}
-
-/* Schedule Section */
-.schedule-section {
-  margin-bottom: 2rem;
-}
-
-.schedule-header {
-  margin-bottom: 1.5rem;
-}
-
-.schedule-title {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 0 0 0.5rem 0;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.schedule-subtitle {
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-  margin: 0;
-}
-
-/* Payment Schedule Table */
-.schedule-table-container {
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  overflow: hidden;
-  background: white;
-  box-shadow: var(--card-shadow);
-}
-
-.schedule-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin: 0;
-  background: white;
-}
-
-.schedule-table thead {
-  background: linear-gradient(135deg, #F8FAFC 0%, #E2E8F0 100%);
-}
-
-.schedule-table th {
-  padding: 1rem 1.5rem;
-  text-align: left;
-  font-weight: 600;
-  color: var(--text-primary);
-  font-size: 0.875rem;
-  border-bottom: 2px solid var(--border-color);
-  position: relative;
-}
-
-.schedule-table th:first-child {
-  border-radius: 0;
-}
-
-.schedule-table th:last-child {
-  border-radius: 0;
-}
-
-.schedule-table tbody tr {
-  border-bottom: 1px solid var(--border-color);
-  transition: all 0.2s ease;
-}
-
-.schedule-table tbody tr:hover {
-  background: #F8FAFC;
-  transform: translateX(2px);
-}
-
-.schedule-table tbody tr:last-child {
-  border-bottom: none;
-}
-
-.schedule-table td {
-  padding: 1.25rem 1.5rem;
-  color: var(--text-secondary);
-  font-size: 0.875rem;
-  vertical-align: middle;
-}
-
-.schedule-table td:first-child {
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.schedule-table td:nth-child(3),
-.schedule-table td:nth-child(4),
-.schedule-table td:nth-child(5),
-.schedule-table td:nth-child(6) {
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-/* Add zebra striping */
-.schedule-table tbody tr:nth-child(even) {
-  background: rgba(248, 250, 252, 0.5);
-}
-
-.schedule-table tbody tr:nth-child(even):hover {
-  background: #F1F5F9;
-}
-
-/* Enhanced cell styling */
-.schedule-table td[style*="font-weight: 600"] {
-  color: var(--primary-color);
-}
-
-/* Confirmation Section */
-.form-actions {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  padding: 2rem 0 1rem 0;
-  border-top: 1px solid var(--border-color);
-  margin-top: 2rem;
-}
-
-.btn-secondary,
-.btn-primary {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.875rem 2rem;
-  border: none;
-  border-radius: 12px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  text-decoration: none;
-  min-width: 140px;
-  justify-content: center;
-}
-
-.btn-secondary {
-  background: #F3F4F6;
-  color: var(--text-secondary);
-  border: 2px solid var(--border-color);
-}
-
-.btn-secondary:hover {
-  background: #E5E7EB;
-  border-color: var(--text-secondary);
-  color: var(--text-primary);
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.btn-primary {
-  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
-  color: white;
-  border: 2px solid transparent;
-}
-
-.btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-}
-
-.btn-primary:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
-}
-
-.btn-primary:disabled:hover {
-  transform: none;
-  box-shadow: none;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-  .simulate-dashboard {
-    gap: 1.5rem;
-  }
-  
-  .header-card {
-    flex-direction: column;
-    text-align: center;
-    gap: 1rem;
-  }
-  
-  .form-row {
-    grid-template-columns: 1fr;
-  }
-  
-  .summary-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  
-  .confirmation-actions {
-    flex-direction: column;
-  }
-}
-
-@media (max-width: 480px) {
-  .header-card {
-    padding: 1.5rem;
-  }
-  
-  .form-card,
-  .results-card {
-    padding: 1.5rem;
-  }
-  
-  .summary-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .simulation-actions {
-    flex-direction: column;
-  }
-}
-</style>
-
 <script>
 let currentSimulation = null;
+let allSimulations = [];
+let simulationCounter = 0;
 let typePrets = <?= json_encode($typePrets) ?>;
 
 function updateDurationLimits() {
@@ -831,16 +292,194 @@ function calculatePayment() {
   const totalARembourser = montant + interetTotal + assuranceTotal;
   
   currentSimulation = {
+    id: null,
     type_pret_id: typePretSelect.value,
+    type_pret_nom: selectedOption.textContent,
     montant: montant + (montant * (tauxAssurance / 100 + tauxInteret / 100) * delai), // Include insurance for delay
     duree: duree,
+    delai: delai,
+    datePret: document.getElementById('datePret').value,
     paiementMensuel: paiementMensuel,
     totalARembourser: totalARembourser,
     interetTotal: interetTotal,
-    assuranceTotal: assuranceTotal
+    assuranceTotal: assuranceTotal,
+    tauxInteret: tauxInteret,
+    tauxAssurance: tauxAssurance
   };
   
   showPreview(currentSimulation);
+}
+
+function addSimulation() {
+  if (!currentSimulation) {
+    alert('Veuillez d\'abord effectuer une simulation');
+    return;
+  }
+  
+  // Check if simulation already exists
+  const existingIndex = allSimulations.findIndex(sim => 
+    sim.type_pret_id === currentSimulation.type_pret_id &&
+    sim.montant === currentSimulation.montant &&
+    sim.duree === currentSimulation.duree &&
+    sim.delai === currentSimulation.delai &&
+    sim.datePret === currentSimulation.datePret
+  );
+  
+  if (existingIndex !== -1) {
+    alert('Cette simulation existe déjà');
+    return;
+  }
+  
+  simulationCounter++;
+  currentSimulation.id = simulationCounter;
+  allSimulations.push({...currentSimulation});
+  
+  updateSimulationsDisplay();
+  resetForm();
+  
+  // Show success message
+  const successMsg = document.createElement('div');
+  successMsg.className = 'alert alert-success alert-dismissible fade show';
+  successMsg.innerHTML = `
+    <i class="fas fa-check-circle"></i>
+    Simulation ajoutée avec succès !
+    <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
+  `;
+  document.querySelector('.simulate-dashboard').insertBefore(successMsg, document.querySelector('.loan-form-section'));
+  
+  setTimeout(() => successMsg.remove(), 3000);
+}
+
+function updateSimulationsDisplay() {
+  const simulationsSection = document.getElementById('simulationsSection');
+  const simulationsGrid = document.getElementById('simulationsGrid');
+  
+  if (allSimulations.length === 0) {
+    simulationsSection.style.display = 'none';
+    return;
+  }
+  
+  simulationsSection.style.display = 'block';
+  
+  let simulationsHTML = '';
+  allSimulations.forEach(simulation => {
+    simulationsHTML += `
+      <div class="simulation-card" data-id="${simulation.id}">
+        <div class="simulation-header">
+          <h4 class="simulation-title">Simulation #${simulation.id}</h4>
+          <div class="simulation-actions">
+            <button type="button" class="btn-action edit" onclick="editSimulation(${simulation.id})" title="Modifier">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button type="button" class="btn-action delete" onclick="removeSimulation(${simulation.id})" title="Supprimer">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        </div>
+        
+        <div class="simulation-details">
+          <div class="detail-row">
+            <span class="detail-label">Type:</span>
+            <span class="detail-value">${simulation.type_pret_nom}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Montant:</span>
+            <span class="detail-value">${simulation.montant.toLocaleString('fr-FR')} Ar</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Durée:</span>
+            <span class="detail-value">${simulation.duree} mois</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Délai:</span>
+            <span class="detail-value">${simulation.delai} mois</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Date:</span>
+            <span class="detail-value">${new Date(simulation.datePret).toLocaleDateString('fr-FR')}</span>
+          </div>
+          <div class="detail-row highlight">
+            <span class="detail-label">Paiement mensuel:</span>
+            <span class="detail-value">${Math.round(simulation.paiementMensuel).toLocaleString('fr-FR')} Ar</span>
+          </div>
+          <div class="detail-row highlight">
+            <span class="detail-label">Total à rembourser:</span>
+            <span class="detail-value">${Math.round(simulation.totalARembourser).toLocaleString('fr-FR')} Ar</span>
+          </div>
+        </div>
+        
+        <div class="simulation-footer">
+          <button type="button" class="btn-confirm" onclick="confirmSimulation(${simulation.id})">
+            <i class="fas fa-check"></i>
+            Confirmer ce Prêt
+          </button>
+          <button type="button" class="btn-details" onclick="showSimulationDetails(${simulation.id})">
+            <i class="fas fa-eye"></i>
+            Voir Détails
+          </button>
+        </div>
+      </div>
+    `;
+  });
+  
+  simulationsGrid.innerHTML = simulationsHTML;
+}
+
+function removeSimulation(id) {
+  if (!confirm('Êtes-vous sûr de vouloir supprimer cette simulation ?')) {
+    return;
+  }
+  
+  allSimulations = allSimulations.filter(sim => sim.id !== id);
+  updateSimulationsDisplay();
+}
+
+function editSimulation(id) {
+  const simulation = allSimulations.find(sim => sim.id === id);
+  if (!simulation) return;
+  
+  // Fill form with simulation data
+  document.getElementById('typePretId').value = simulation.type_pret_id;
+  document.getElementById('montant').value = simulation.montant - (simulation.montant * (simulation.tauxAssurance / 100 + simulation.tauxInteret / 100) * simulation.delai);
+  document.getElementById('duree').value = simulation.duree;
+  document.getElementById('delai').value = simulation.delai;
+  document.getElementById('datePret').value = simulation.datePret;
+  
+  // Remove simulation from list
+  allSimulations = allSimulations.filter(sim => sim.id !== id);
+  updateSimulationsDisplay();
+  
+  // Trigger calculation
+  updateDurationLimits();
+  calculatePayment();
+}
+
+function showSimulationDetails(id) {
+  const simulation = allSimulations.find(sim => sim.id === id);
+  if (!simulation) return;
+  
+  currentSimulation = simulation;
+  showPreview(simulation);
+}
+
+function confirmSimulation(id) {
+  const simulation = allSimulations.find(sim => sim.id === id);
+  if (!simulation) return;
+  
+  currentSimulation = simulation;
+  confirmLoanCreation();
+}
+
+function clearAllSimulations() {
+  if (allSimulations.length === 0) return;
+  
+  if (!confirm('Êtes-vous sûr de vouloir supprimer toutes les simulations ?')) {
+    return;
+  }
+  
+  allSimulations = [];
+  updateSimulationsDisplay();
+  hidePreview();
 }
 
 function showPreview(simulation) {
@@ -865,9 +504,8 @@ function showPreview(simulation) {
 
 function generatePaymentSchedule(simulation) {
   const scheduleContainer = document.getElementById('paymentSchedule');
-  const date = document.getElementById('datePret');
-  const currentDate = new Date(date.value);
-  const delai = document.getElementById('delai').value ? parseInt(document.getElementById('delai').value) : 0;
+  const currentDate = new Date(simulation.datePret);
+  const delai = simulation.delai;
   currentDate.setMonth(currentDate.getMonth() + delai);
 
   
@@ -917,12 +555,12 @@ function generatePaymentSchedule(simulation) {
 
 function hidePreview() {
   document.getElementById('paymentPreview').style.display = 'none';
-  currentSimulation = null;
 }
 
 function resetForm() {
   document.getElementById('loanDataForm').reset();
   hidePreview();
+  currentSimulation = null;
   updateDurationLimits();
 }
 
@@ -937,27 +575,27 @@ function confirmLoanCreation() {
   }
   
   const confirmBtn = document.getElementById('confirmBtn');
-  const btnText = confirmBtn.querySelector('span');
-  
-  // Show loading state
-  confirmBtn.disabled = true;
-  btnText.textContent = 'Création en cours...';
+  if (confirmBtn) {
+    const btnText = confirmBtn.querySelector('span');
+    
+    // Show loading state
+    confirmBtn.disabled = true;
+    btnText.textContent = 'Création en cours...';
+  }
   
   // Create form and submit to existing route
   const form = document.createElement('form');
   form.method = 'POST';
   form.action = '<?= route('/client/loans/create') ?>';
-  const date = document.getElementById('datePret');
-  const currentDate = new Date(date.value);
-  const delai = document.getElementById('delai').value ? parseInt(document.getElementById('delai').value) : 0;
-  // currentDate.setMonth(currentDate.getMonth() + delai);
+  const currentDate = new Date(currentSimulation.datePret);
+  
   // Add form data
   const formData = [
     { name: 'type_pret_id', value: currentSimulation.type_pret_id },
     { name: 'montant', value: currentSimulation.montant },
     { name: 'duree', value: currentSimulation.duree },
     { name: 'date_creation', value: currentDate.toISOString() },
-    { name: 'delai', value: delai }
+    { name: 'delai', value: currentSimulation.delai }
   ];
   
   formData.forEach(data => {
