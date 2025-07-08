@@ -25,7 +25,7 @@
             </select>
           </div>
           <div class="col-md-3">
-            <label for="annee1" class="form-label">Année de début</label>
+            <label for="annee1" class="form-label">Mois de début</label>
             <input type="number" class="form-control" id="annee1" name="annee1" min="2020" max="2030" value="<?= date('Y') ?>" required>
           </div>
           <div class="col-md-3">
@@ -47,7 +47,7 @@
             </select>
           </div>
           <div class="col-md-3">
-            <label for="annee2" class="form-label">Année de fin (optionnel)</label>
+            <label for="annee2" class="form-label">Mois de fin (optionnel)</label>
             <input type="number" class="form-control" id="annee2" name="annee2" min="2020" max="2030" value="<?= date('Y') ?>">
           </div>
           <div class="col-12">

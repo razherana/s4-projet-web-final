@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace app\controllers;
 
+use DateTime;
 use flight\Engine;
 
 class ClientController
@@ -139,6 +140,9 @@ class ClientController
     $typePretId = $_POST['type_pret_id'] ?? null;
     $montant = $_POST['montant'] ?? null;
     $duree = $_POST['duree'] ?? null;
+    $dateRetour = $_POST['date_creation'] ?? date('Y-m-d H:i:s');
+    $delai = $_POST['delai'] ?? 0;
+    $dateRetour = (new DateTime($dateRetour))->format('Y-m-d H:i:s');
 
     if (!$typePretId || !$montant || !$duree) {
       $this->app->redirect('/client/simulate?error=missing_data');
@@ -153,7 +157,8 @@ class ClientController
         'duree' => (int)$duree,
         'date_acceptation' => null,
         'date_refus' => null,
-        'date_creation' => date('Y-m-d H:i:s')
+        'date_creation' => $dateRetour,
+        'delai' => (int)$delai
       ];
 
       $result = $this->apiCall('/prets', 'POST', $loanData);

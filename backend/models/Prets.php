@@ -2,6 +2,8 @@
 
 namespace models;
 
+use DateInterval;
+use DateTime;
 use PDO;
 
 class Prets
@@ -32,8 +34,8 @@ class Prets
   public static function create($data)
   {
     $db = getDB();
-    $stmt = $db->prepare("INSERT INTO s4_prets (client_id, type_pret_id, montant, duree, date_acceptation, date_refus, date_creation) VALUES (?, ?, ?, ?, ?, ?, ?)");
-    $stmt->execute([$data->client_id, $data->type_pret_id, $data->montant, $data->duree, $data->date_acceptation, $data->date_refus, $data->date_creation]);
+    $stmt = $db->prepare("INSERT INTO s4_prets (client_id, type_pret_id, montant, duree, date_acceptation, date_refus, date_creation, delai) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->execute([$data->client_id, $data->type_pret_id, $data->montant, $data->duree, $data->date_acceptation, $data->date_refus, $data->date_creation, $data->delai ?? 0]);
     return $db->lastInsertId();
   }
 
@@ -116,28 +118,36 @@ class Prets
       return [];
     }
 
+    $delai = $pret['delai'];
+
     $dateAcceptation = new \DateTime($pret['date_acceptation']);
-    $anneeDebut = $dateAcceptation->format('Y');
+    $dateAcceptation->setDate(
+      $dateAcceptation->format('Y'), $dateAcceptation->format('m') + $delai, 1
+    );
 
     $result = [];
+    $totalMois = $pret['duree']; // Total months for the loan
     
-    for ($anneeIndex = 0; $anneeIndex < $pret['duree']; $anneeIndex++) {
-      $anneeActuelle = $anneeDebut + $anneeIndex;
-      
-      // Create payment due date (anniversary of loan acceptance)
+    for ($moisIndex = 0; $moisIndex < $totalMois; $moisIndex++) {
+      // Calculate current month and year
       $dateEcheance = clone $dateAcceptation;
-      $dateEcheance->setDate($anneeActuelle, $dateAcceptation->format('m'), $dateAcceptation->format('d'));
+      $dateEcheance->setDate($dateEcheance->format('Y'), $dateEcheance->format('m') + $moisIndex, 1);
+      // $dateEcheance->add(new \DateInterval('P' . $moisIndex . 'M'));
       
-      $montant = self::getMontantAPayerByMoisAnnee($pretId, $dateAcceptation->format('m'), $anneeActuelle);
+      $anneeActuelle = $dateEcheance->format('Y');
+      $moisActuelle = $dateEcheance->format('m');
       
-      // Check if payment exists for this year
-      $stmt = $db->prepare("SELECT * FROM s4_pret_retour_historiques WHERE pret_id = ? AND YEAR(date_retour) = ?");
-      $stmt->execute([$pretId, $anneeActuelle]);
+      $montant = self::getMontantAPayerByMoisAnnee($pret, $moisActuelle, $anneeActuelle);
+      
+      // Check if payment exists for this month and year
+      $stmt = $db->prepare("SELECT * FROM s4_pret_retour_historiques WHERE pret_id = ? AND MONTH(date_retour) = ? AND YEAR(date_retour) = ?");
+      $stmt->execute([$pretId, $moisActuelle, $anneeActuelle]);
       $payer = $stmt->fetch(PDO::FETCH_ASSOC);
       
       $result[] = [
-        'annee_numero' => $anneeIndex + 1,
+        'mois_numero' => $moisIndex + 1,
         'annee' => $anneeActuelle,
+        'mois' => $moisActuelle,
         'date_echeance' => $dateEcheance->format('Y-m-d'),
         'montant' => $montant,
         'isPayer' => !!$payer
@@ -147,9 +157,8 @@ class Prets
     return $result;
   }
 
-  public static function getMontantAPayerByMoisAnnee($pretId, $mois, $annee)
+  public static function getMontantAPayerByMoisAnnee($pret, $mois, $annee)
   {
-    $pret = self::getById($pretId);
     if (!$pret) {
       return 0;
     }
@@ -166,20 +175,27 @@ class Prets
 
     $dateAcceptation = new \DateTime($pret['date_acceptation']);
     
-    // Calculate the year number from loan start (1-based)
-    $anneeDuPret = $annee - $dateAcceptation->format('Y') + 1;
+    // Calculate total months from loan start
+    $startDate = new \DateTime($dateAcceptation->format('Y-m-01'));
+    $startDate->setDate($startDate->format('Y'), $startDate->format('m') + $pret['delai'], 1);
+
+    $currentDate = new \DateTime("$annee-$mois-01");
     
-    // Check if this year is within the loan period
-    if ($anneeDuPret < 1 || $anneeDuPret > $pret['duree']) {
+    $diff = $startDate->diff($currentDate);
+    $monthsDiff = ($diff->y * 12) + $diff->m + 1;
+    
+    // Check if this month is within the loan period
+    $totalMonths = $pret['duree'];
+    if ($monthsDiff < 1 || $monthsDiff > $totalMonths) {
       return 0;
     }
 
-    // Calculate annual payment with interest and insurance
-    $montantAnnuel = $pret['montant'] / $pret['duree'];
-    $interetAnnuel = ($pret['montant'] * $type_pret['taux_interet'] / 100) / $pret['duree'];
-    $assuranceAnnuelle = ($pret['montant'] * ($type_pret['taux_assurance'] ?? 0) / 100) / $pret['duree'];
+    // Calculate monthly payment with interest and insurance
+    $montantMensuel = $pret['montant'] / $totalMonths;
+    $interetMensuel = ($pret['montant'] * $type_pret['taux_interet'] / 100) / $totalMonths;
+    $assuranceMensuelle = ($pret['montant'] * ($type_pret['taux_assurance'] ?? 0) / 100) / $totalMonths;
 
-    return $montantAnnuel + $interetAnnuel + $assuranceAnnuelle;
+    return $montantMensuel + $interetMensuel + $assuranceMensuelle;
   }
 
   public static function findByMoisAnnee($mois1, $annee1, $mois2 = null, $annee2 = null) {

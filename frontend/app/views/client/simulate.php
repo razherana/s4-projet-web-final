@@ -73,7 +73,14 @@
             </select>
             <small class="form-help">Choisissez le type de prêt qui correspond à vos besoins</small>
           </div>
-          
+          <div class="form-group">
+            <label for="montant" class="form-label">
+              <i class="fas fa-coins"></i>
+              Date de prets
+            </label>
+            <input type="date" id="datePret" name="datePret" class="form-control" required oninput="calculatePayment()">
+            <small class="form-help">Date de l'emprunt</small>
+          </div>
           <div class="form-group">
             <label for="montant" class="form-label">
               <i class="fas fa-coins"></i>
@@ -88,10 +95,18 @@
           <div class="form-group">
             <label for="duree" class="form-label">
               <i class="fas fa-calendar-alt"></i>
-              Durée (années)
+              Durée (mois)
             </label>
             <input type="number" id="duree" name="duree" class="form-control" required min="1" oninput="calculatePayment()" placeholder="Ex: 5">
             <small class="form-help" id="dureeHelp">Durée de remboursement en années</small>
+          </div>
+          <div class="form-group">
+            <label for="duree" class="form-label">
+              <i class="fas fa-calendar-alt"></i>
+              Delai avant remboursement (mois)
+            </label>
+            <input type="number" id="delai" name="delai" class="form-control" required min="1" oninput="calculatePayment()" placeholder="Ex: 5">
+            <small class="form-help" id="dureeHelp"></small>
           </div>
           
           <div class="form-group">
@@ -141,7 +156,7 @@
             </div>
             <div class="summary-content">
               <div class="summary-value" id="summaryPaiementAnnuel">0 Ar</div>
-              <div class="summary-label">Paiement Annuel</div>
+              <div class="summary-label">Paiement Mensuel</div>
             </div>
           </div>
           
@@ -769,6 +784,7 @@ function updateDurationLimits() {
   const typePretSelect = document.getElementById('typePretId');
   const dureeInput = document.getElementById('duree');
   const dureeHelp = document.getElementById('dureeHelp');
+  const delai = document.getElementById('delai')
   
   if (!typePretSelect.value) {
     dureeHelp.textContent = 'Durée de remboursement en années';
@@ -790,8 +806,9 @@ function calculatePayment() {
   const typePretSelect = document.getElementById('typePretId');
   const montant = parseFloat(document.getElementById('montant').value) || 0;
   const duree = parseInt(document.getElementById('duree').value) || 0;
-  
-  if (!typePretSelect.value || !montant || !duree) {
+  const delai = parseInt(document.getElementById('delai').value) || 0;
+
+  if (!typePretSelect.value || !montant || !duree || !delai) {
     hidePreview();
     return;
   }
@@ -807,18 +824,17 @@ function calculatePayment() {
     return;
   }
   
-  // Calculate payments like in admin prets.php
-  const montantAnnuel = montant / duree;
-  const interetTotal = montant * (tauxInteret / 100);
-  const assuranceTotal = montant * (tauxAssurance / 100);
-  const paiementAnnuel = montantAnnuel + (interetTotal / duree) + (assuranceTotal / duree);
+  const montantMensuel = montant / duree;
+  const interetTotal = montant * (tauxInteret / 100) * (duree + delai);
+  const assuranceTotal = montant * (tauxAssurance / 100) * (duree + delai);
+  const paiementMensuel = montantMensuel + (interetTotal / duree) + (assuranceTotal / duree);
   const totalARembourser = montant + interetTotal + assuranceTotal;
   
   currentSimulation = {
     type_pret_id: typePretSelect.value,
-    montant: montant,
+    montant: montant + (montant * (tauxAssurance / 100 + tauxInteret / 100) * delai), // Include insurance for delay
     duree: duree,
-    paiementAnnuel: paiementAnnuel,
+    paiementMensuel: paiementMensuel,
     totalARembourser: totalARembourser,
     interetTotal: interetTotal,
     assuranceTotal: assuranceTotal
@@ -830,7 +846,7 @@ function calculatePayment() {
 function showPreview(simulation) {
   // Update summary cards
   document.getElementById('summaryMontant').textContent = simulation.montant.toLocaleString('fr-FR') + ' Ar';
-  document.getElementById('summaryPaiementAnnuel').textContent = Math.round(simulation.paiementAnnuel).toLocaleString('fr-FR') + ' Ar';
+  document.getElementById('summaryPaiementAnnuel').textContent = Math.round(simulation.paiementMensuel).toLocaleString('fr-FR') + ' Ar';
   document.getElementById('summaryTotalARembourser').textContent = Math.round(simulation.totalARembourser).toLocaleString('fr-FR') + ' Ar';
   document.getElementById('summaryInterets').textContent = Math.round(simulation.interetTotal + simulation.assuranceTotal).toLocaleString('fr-FR') + ' Ar';
   
@@ -849,13 +865,17 @@ function showPreview(simulation) {
 
 function generatePaymentSchedule(simulation) {
   const scheduleContainer = document.getElementById('paymentSchedule');
-  const currentDate = new Date();
+  const date = document.getElementById('datePret');
+  const currentDate = new Date(date.value);
+  const delai = document.getElementById('delai').value ? parseInt(document.getElementById('delai').value) : 0;
+  currentDate.setMonth(currentDate.getMonth() + delai);
+
   
   let scheduleHTML = `
     <table class="schedule-table">
       <thead>
         <tr>
-          <th>Année</th>
+          <th>Mois</th>
           <th>Date d'échéance</th>
           <th>Capital</th>
           <th>Intérêts</th>
@@ -868,7 +888,7 @@ function generatePaymentSchedule(simulation) {
   
   for (let i = 1; i <= simulation.duree; i++) {
     const dueDate = new Date(currentDate);
-    dueDate.setFullYear(dueDate.getFullYear() + i);
+    dueDate.setMonth(dueDate.getMonth() + i);
     
     const capital = simulation.montant / simulation.duree;
     const interets = simulation.interetTotal / simulation.duree;
@@ -877,7 +897,7 @@ function generatePaymentSchedule(simulation) {
     
     scheduleHTML += `
       <tr>
-        <td><strong>Année ${i}</strong></td>
+        <td><strong>Mois ${i}</strong></td>
         <td>${dueDate.toLocaleDateString('fr-FR')}</td>
         <td>${Math.round(capital).toLocaleString('fr-FR')} Ar</td>
         <td>${Math.round(interets).toLocaleString('fr-FR')} Ar</td>
@@ -927,12 +947,17 @@ function confirmLoanCreation() {
   const form = document.createElement('form');
   form.method = 'POST';
   form.action = '<?= route('/client/loans/create') ?>';
-  
+  const date = document.getElementById('datePret');
+  const currentDate = new Date(date.value);
+  const delai = document.getElementById('delai').value ? parseInt(document.getElementById('delai').value) : 0;
+  // currentDate.setMonth(currentDate.getMonth() + delai);
   // Add form data
   const formData = [
     { name: 'type_pret_id', value: currentSimulation.type_pret_id },
     { name: 'montant', value: currentSimulation.montant },
-    { name: 'duree', value: currentSimulation.duree }
+    { name: 'duree', value: currentSimulation.duree },
+    { name: 'date_creation', value: currentDate.toISOString() },
+    { name: 'delai', value: delai }
   ];
   
   formData.forEach(data => {

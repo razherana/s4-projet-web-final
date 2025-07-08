@@ -92,7 +92,7 @@
             </div>
             <div class="loan-detail">
               <div class="detail-label">Durée</div>
-              <div class="detail-value"><?= $pret['duree'] ?> an(s)</div>
+              <div class="detail-value"><?= $pret['duree'] ?> mois</div>
             </div>
             <div class="loan-detail">
               <div class="detail-label">Date création</div>
@@ -102,16 +102,16 @@
 
           <div class="loan-actions">
             <?php if (!$pret['date_acceptation'] && !$pret['date_refus']): ?>
-              <button class="loan-btn approve" onclick="updateLoanStatus(<?= $pret['id'] ?>, 'approve')">
+              <button class="loan-btn approve" onclick="updateLoanStatus('<?= $pret['date_creation'] ?>', <?= $pret['id'] ?>, 'approve')">
                 <i class="fas fa-check"></i>
                 Approuver
               </button>
-              <button class="loan-btn reject" onclick="updateLoanStatus(<?= $pret['id'] ?>, 'reject')">
+              <button class="loan-btn reject" onclick="updateLoanStatus('<?= $pret['date_creation'] ?>', <?= $pret['id'] ?>, 'reject')">
                 <i class="fas fa-times"></i>
                 Refuser
               </button>
             <?php elseif ($pret['date_acceptation']): ?>
-              <button class="loan-btn info" onclick="showLoanDetails(<?= json_encode($pret) ?>)">
+              <button class="loan-btn info" onclick="showLoanDetails(<?= $pret['client_id'] ?>, <?= $pret['id'] ?>)">
                 <i class="fas fa-eye"></i>
                 Voir Paiements
               </button>
@@ -206,14 +206,37 @@
             </div>
           </div>
           
+
           <div class="form-row">
             <div class="form-group">
-              <label for="duree">Durée (années)</label>
-              <input type="number" id="duree" name="duree" required min="1" oninput="calculatePayment()">
+              <label for="montant" class="form-label">
+                <i class="fas fa-coins"></i>
+                Date de prets
+              </label>
+              <input type="date" id="datePret" name="datePret" class="form-control" required oninput="calculatePayment()">
+              <small class="form-help">Date de l'emprunt</small>
+            </div>
+
+            <div class="form-group">
+              <label for="duree" class="form-label">
+                <i class="fas fa-calendar-alt"></i>
+                Durée (mois)
+              </label>
+              <input type="number" id="duree" name="duree" class="form-control" required min="1" oninput="calculatePayment()" placeholder="Ex: 5">
               <small class="form-help" id="dureeHelp"></small>
             </div>
           </div>
+          
+          <div class="form-group">
+            <label for="duree" class="form-label">
+              <i class="fas fa-calendar-alt"></i>
+              Delai avant remboursement (mois)
+            </label>
+            <input type="number" id="delai" name="delai" class="form-control" required min="1" oninput="calculatePayment()" placeholder="Ex: 5">
+            <small class="form-help" id="dureeHelp"></small>
+          </div>
         </form>
+
 
         <!-- Payment Preview -->
         <div id="paymentPreview" class="payment-preview" style="display: none;">
@@ -853,9 +876,10 @@ function calculatePayment() {
   const typePretSelect = document.getElementById('typePretId');
   const montant = parseFloat(document.getElementById('montant').value) || 0;
   const duree = parseInt(document.getElementById('duree').value) || 0;
-  
-  if (!typePretSelect.value || !montant || !duree) {
-    document.getElementById('paymentPreview').style.display = 'none';
+  const delai = parseInt(document.getElementById('delai').value) || 0;
+
+  if (!typePretSelect.value || !montant || !duree || !delai) {
+    hidePreview();
     return;
   }
   
@@ -864,6 +888,31 @@ function calculatePayment() {
   const tauxAssurance = parseFloat(selectedOption.dataset.tauxAssurance) || 0;
   const dureeMin = parseInt(selectedOption.dataset.dureeMin) || 1;
   const dureeMax = parseInt(selectedOption.dataset.dureeMax) || 30;
+  
+  if (duree < dureeMin || duree > dureeMax) {
+    return;
+  }
+  
+  const montantMensuel = montant / duree;
+  const interetTotal = montant * (tauxInteret / 100) * (duree + delai);
+  const assuranceTotal = montant * (tauxAssurance / 100) * (duree + delai);
+  const paiementMensuel = montantMensuel + (interetTotal / duree) + (assuranceTotal / duree);
+  const totalARembourser = montant + interetTotal + assuranceTotal;
+  
+  currentSimulation = {
+    type_pret_id: typePretSelect.value,
+    montant: montant + (montant * (tauxAssurance / 100 + tauxInteret / 100) * delai), // Include insurance for delay
+    duree: duree,
+    paiementMensuel: paiementMensuel,
+    totalARembourser: totalARembourser,
+    interetTotal: interetTotal,
+    assuranceTotal: assuranceTotal
+  };
+  
+  if (!typePretSelect.value || !montant || !duree) {
+    document.getElementById('paymentPreview').style.display = 'none';
+    return;
+  }
   
   // Update duration help text
   document.getElementById('dureeHelp').textContent = `Durée autorisée: ${dureeMin} - ${dureeMax} années`;
@@ -875,26 +924,24 @@ function calculatePayment() {
   
   // Calculate payments
   const montantAnnuel = montant / duree;
-  const interetTotal = montant * (tauxInteret / 100);
-  const assuranceTotal = montant * (tauxAssurance / 100);
   const paiementAnnuel = montantAnnuel + (interetTotal / duree) + (assuranceTotal / duree);
-  const totalARembourser = montant + interetTotal + assuranceTotal;
   
   // Update display
   document.getElementById('annualPayment').textContent = new Intl.NumberFormat('fr-FR').format(paiementAnnuel) + ' Ar';
   document.getElementById('totalAmount').textContent = new Intl.NumberFormat('fr-FR').format(totalARembourser) + ' Ar';
-  
+
   // Generate schedule
   let scheduleHTML = '';
-  const startDate = new Date();
+  const startDate = document.getElementById('datePret')?.value || new Date().toISOString();
   
-  for (let i = 1; i <= duree; i++) {
+  for (let i = 0; i < duree; i++) {
     const dueDate = new Date(startDate);
-    dueDate.setFullYear(dueDate.getFullYear() + i);
+    dueDate.setMonth(dueDate.getMonth() + delai);
+    dueDate.setMonth(dueDate.getMonth() + i);
     
     scheduleHTML += `
       <div class="schedule-item">
-        <span>Année ${i} - ${dueDate.toLocaleDateString('fr-FR')}</span>
+        <span>Mois ${i + 1} - ${dueDate.toLocaleDateString('fr-FR')}</span>
         <span class="value">${new Intl.NumberFormat('fr-FR').format(paiementAnnuel)} Ar</span>
       </div>
     `;
@@ -929,16 +976,18 @@ function confirmLoanCreation() {
   submitForm.submit();
 }
 
-function updateLoanStatus(loanId, action) {
+function updateLoanStatus(dateCreation, loanId, action) {
   const actionText = action === 'approve' ? 'approuver' : 'refuser';
   
   if (!confirm(`Êtes-vous sûr de vouloir ${actionText} ce prêt ?`)) {
     return;
   }
+
+  const date = new Date(dateCreation);
   
   const data = {
-    date_acceptation: action === 'approve' ? new Date().toISOString().split('T')[0] + ' ' + new Date().toTimeString().split(' ')[0] : null,
-    date_refus: action === 'reject' ? new Date().toISOString().split('T')[0] + ' ' + new Date().toTimeString().split(' ')[0] : null
+    date_acceptation: action === 'approve' ? date.toISOString().split('T')[0] + ' ' + date.toTimeString().split(' ')[0] : null,
+    date_refus: action === 'reject' ? date.toISOString().split('T')[0] + ' ' + date.toTimeString().split(' ')[0] : null
   };
   
   fetch(`<?= $config['api']['base_url'] ?>/prets/${loanId}`, {
@@ -1048,7 +1097,7 @@ async function generateClientSidePDF(data, loanId) {
   const loanInfo = [
     [`Client: ${loan.client_nom} ${loan.client_prenom}`, `Email: ${loan.client_email}`],
     [`Type: ${loan.type_pret_nom}`, `Taux: ${loan.taux_interet}%`],
-    [`Montant: ${loan.montant.toLocaleString('fr-FR')} Ar`, `Durée: ${loan.duree} an(s)`],
+    [`Montant: ${loan.montant.toLocaleString('fr-FR')} Ar`, `Durée: ${loan.duree} mois`],
     [`Création: ${new Date(loan.date_creation).toLocaleDateString('fr-FR')}`, 
      `Approbation: ${loan.date_acceptation ? new Date(loan.date_acceptation).toLocaleDateString('fr-FR') : 'En attente'}`]
   ];
@@ -1073,7 +1122,7 @@ async function generateClientSidePDF(data, loanId) {
   pdf.setFillColor(59, 130, 246);
   pdf.rect(20, yPos - 5, 170, 8, 'F');
   
-  pdf.text('Année', 22, yPos);
+  pdf.text('Mois', 22, yPos);
   pdf.text('Date', 42, yPos);
   pdf.text('Montant', 72, yPos);
   pdf.text('Statut', 102, yPos);
@@ -1100,7 +1149,7 @@ async function generateClientSidePDF(data, loanId) {
       pdf.rect(20, yPos - 5, 170, 7, 'F');
     }
     
-    pdf.text(`Année ${yearNumber}`, 22, yPos);
+    pdf.text(`Mois ${yearNumber}`, 22, yPos);
     pdf.text(new Date(item.date_echeance).toLocaleDateString('fr-FR'), 42, yPos);
     pdf.text(`${item.montant.toLocaleString('fr-FR')} Ar`, 72, yPos);
     pdf.text(isPaid ? 'Payé' : 'En attente', 102, yPos);
@@ -1125,9 +1174,9 @@ async function generateClientSidePDF(data, loanId) {
   pdf.save(`paiements_pret_${loanId}.pdf`);
 }
 
-function showLoanDetails(loan) {
+function showLoanDetails(client_id, loan_id) {
   // Show loan details modal or redirect to details page
-  window.location.href = '<?= route('/admin/clients') ?>?client_id=' + loan.client_id + '&loan_id=' + loan.id;
+  window.location.href = '<?= route('/admin/clients') ?>?client_id=' + client_id + '&loan_id=' + loan_id;
 }
 
 // Close modals when clicking outside

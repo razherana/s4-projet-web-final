@@ -298,7 +298,7 @@ class PdfExport
                 </div>
                 <div class="summary-item">
                     <div class="summary-value">' . number_format($annualPayment, 0, ',', ' ') . ' Ar</div>
-                    <div class="summary-label">Paiement Annuel</div>
+                    <div class="summary-label">Paiement Mensuel</div>
                 </div>
                 <div class="summary-item">
                     <div class="summary-value">' . number_format($totalWithInterest, 0, ',', ' ') . ' Ar</div>
@@ -315,7 +315,7 @@ class PdfExport
         <table class="payments-table">
             <thead>
                 <tr>
-                    <th>Année</th>
+                    <th>Mois</th>
                     <th>Date d\'échéance</th>
                     <th class="text-right">Montant à Payer</th>
                     <th class="text-center">Statut</th>
@@ -345,7 +345,7 @@ class PdfExport
       
       $html .= '
                 <tr>
-                    <td>Année ' . $yearNumber . '</td>
+                    <td>Mois ' . $yearNumber . '</td>
                     <td>' . $dueDate . '</td>
                     <td class="text-right amount">' . number_format($scheduleItem['montant'], 0, ',', ' ') . ' Ar</td>
                     <td class="text-center">' . $status . '</td>

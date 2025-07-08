@@ -142,10 +142,10 @@
                 </div>
                 <div class="loan-detail">
                   <div class="detail-label">Durée</div>
-                  <div class="detail-value"><?= $loan['duree'] ?> an(s)</div>
+                  <div class="detail-value"><?= $loan['duree'] ?> mois</div>
                 </div>
                 <div class="loan-detail">
-                  <div class="detail-label">Paiement annuel</div>
+                  <div class="detail-label">Paiement mensuel</div>
                   <div class="detail-value"><?= number_format($loan['montant'] / $loan['duree'], 0, ',', ' ') ?> Ar</div>
                 </div>
                 <div class="loan-detail">
@@ -276,7 +276,7 @@
               <div class="summary-label">Montant total</div>
             </div>
             <div class="summary-item">
-              <div class="summary-value"><?= $currentLoan['duree'] ?> an(s)</div>
+              <div class="summary-value"><?= $currentLoan['duree'] ?> mois</div>
               <div class="summary-label">Durée</div>
             </div>
             <div class="summary-item">
@@ -286,7 +286,7 @@
                   echo number_format($annualPayment, 0, ',', ' '); 
                 ?> Ar
               </div>
-              <div class="summary-label">Paiement annuel</div>
+              <div class="summary-label">Paiement mensuel</div>
             </div>
             <div class="summary-item">
               <div class="summary-value"><?= date('d/m/Y', strtotime($currentLoan['date_creation'])) ?></div>
@@ -300,7 +300,7 @@
           <table class="payments-table">
             <thead>
               <tr>
-                <th>Année #</th>
+                <th>Mois #</th>
                 <th>Date d'échéance</th>
                 <th>Montant</th>
                 <th>Statut</th>
@@ -334,7 +334,7 @@
                       }
                     }
                     
-                    $isPaid = $payment['isPayer'] || $actualPayment;
+                    $isPaid = $payment['isPayer'];
                     $statusClass = $isPaid ? 'paid' : 'pending';
                     $statusText = $isPaid ? 'Payé' : 'En attente';
                     $paymentDateText = $actualPayment ? (new DateTime($actualPayment['date_retour']))->format('d/m/Y') : '-';
@@ -344,11 +344,11 @@
                     }
                   ?>
                   <tr>
-                    <td>Année <?= $yearNumber ?></td>
+                    <td>Mois <?= $yearNumber ?></td>
                     <td><?= $dueDate->format('d/m/Y') ?></td>
                     <td><?= number_format($payment['montant'], 0, ',', ' ') ?> Ar</td>
                     <td><span class="payment-status <?= $statusClass ?>"><?= $statusText ?></span></td>
-                    <td><?= $paymentDateText ?></td>
+                    <td><?= $payment['isPayer'] ? $dueDate->format('d/m/Y') : '-' ?></td>
                     <td>
                       <?php if (!$isPaid && $yearNumber <= $lastPaidYear + 1): ?>
                         <form method="POST" action="<?= route('/admin/clients/payment') ?>" style="display: inline;">
@@ -1287,7 +1287,7 @@ async function showLoanPayments(loan) {
         <div class="summary-label">Montant total</div>
       </div>
       <div class="summary-item">
-        <div class="summary-value">${loan.duree} an(s)</div>
+        <div class="summary-value">${loan.duree} mois</div>
         <div class="summary-label">Durée</div>
       </div>
       <div class="summary-item">
@@ -1340,7 +1340,7 @@ function displayPaymentsTable(schedule, existingPayments) {
     <table class="payments-table">
       <thead>
         <tr>
-          <th>Année #</th>
+          <th>Mois #</th>
           <th>Date d'échéance</th>
           <th>Montant</th>
           <th>Statut</th>
@@ -1375,7 +1375,7 @@ function displayPaymentsTable(schedule, existingPayments) {
     let paymentDate = '-';
     let actionButton = '';
     
-    if (payment.isPayer || actualPayment) {
+    if (payment.isPayer) {
       statusClass = 'paid';
       statusText = 'Payé';
       if (actualPayment) {
@@ -1412,7 +1412,7 @@ function displayPaymentsTable(schedule, existingPayments) {
     
     tableHTML += `
       <tr>
-        <td>Année ${yearNumber}</td>
+        <td>Mois ${yearNumber}</td>
         <td>${dueDate.toLocaleDateString('fr-FR')}</td>
         <td>${new Intl.NumberFormat('fr-FR').format(payment.montant)} Ar</td>
         <td><span class="payment-status ${statusClass}">${statusText}</span></td>
@@ -1471,7 +1471,7 @@ async function createLoanCard(loan) {
       </div>
       <div class="loan-detail">
         <div class="detail-label">Durée</div>
-        <div class="detail-value">${loan.duree} an(s)</div>
+        <div class="detail-value">${loan.duree} mois</div>
       </div>
       <div class="loan-detail">
         <div class="detail-label">Paiement annuel</div>

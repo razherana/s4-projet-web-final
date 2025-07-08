@@ -130,7 +130,7 @@
             </div>
             <p class="activity-description">
               Montant: <?= number_format($pret['montant'], 0, ',', ' ') ?> Ar - 
-              Durée: <?= $pret['duree'] ?> an(s) - 
+              Durée: <?= $pret['duree'] ?> mois - 
               Statut: <?= !empty($pret['date_acceptation']) ? 'Approuvé' : (!empty($pret['date_refus']) ? 'Refusé' : 'En attente') ?>
             </p>
           </div>

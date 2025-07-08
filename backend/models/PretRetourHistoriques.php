@@ -164,42 +164,8 @@ class PretRetourHistoriques
 
   public static function isPayer($PretId, $mois, $annee){
     $db = getDB();
-    $stmt = $db->prepare("SELECT * FROM s4_pret_retour_historiques WHERE pret_id= ? AND MONTH(FROM_UNIXTIME(date_retour)) = ? AND YEAR(FROM_UNIXTIME(date_retour)) = ?");
+    $stmt = $db->prepare("SELECT * FROM s4_pret_retour_historiques WHERE pret_id= ? AND MONTH(date_retour) = ? AND YEAR(date_retour) = ?");
     $stmt->execute([$PretId, $mois, $annee]);
     return $stmt->fetch(PDO::FETCH_ASSOC);
-  }
-
-  public static function isPayerAnnuel($pretId, $annee) {
-    $db = getDB();
-    $stmt = $db->prepare("SELECT * FROM s4_pret_retour_historiques WHERE pret_id = ? AND YEAR(FROM_UNIXTIME(date_retour)) = ?");
-    $stmt->execute([$pretId, $annee]);
-    return $stmt->fetch(PDO::FETCH_ASSOC);
-  }
-
-  public static function getLastPaymentYear($pretId) {
-    $db = getDB();
-    $stmt = $db->prepare("
-      SELECT 
-        COUNT(*) as payments_made,
-        MAX(YEAR(date_retour)) as last_year 
-      FROM s4_pret_retour_historiques 
-      WHERE pret_id = ?
-    ");
-    $stmt->execute([$pretId]);
-    return $stmt->fetch(PDO::FETCH_ASSOC);
-  }
-
-  public static function getPaymentsByLoan($pretId) {
-    $db = getDB();
-    $stmt = $db->prepare("
-      SELECT 
-        *,
-        YEAR(date_retour) as payment_year
-      FROM s4_pret_retour_historiques 
-      WHERE pret_id = ?
-      ORDER BY date_retour ASC
-    ");
-    $stmt->execute([$pretId]);
-    return $stmt->fetchAll(PDO::FETCH_ASSOC);
   }
 }
