@@ -100,38 +100,21 @@ class Prets
     $stmt->execute([$id]);
   }
 
-  public static function getMontantAPayerByMoisAnnee($pretId, $mois, $annee)
-  {
-    $pret = self::getById($pretId);
-    $type_pret = TypePrets::getById($pret['type_pret_id']);
-
-    if (!$pret || !$type_pret)
-      return null;
-
-    $dateAcceptation = new \DateTime($pret['date_acceptation']);
-    
-    // Calculate the year number from loan start (1-based)
-    $anneeDuPret = $annee - $dateAcceptation->format('Y') + 1;
-    
-    // Check if this year is within the loan period
-    if ($anneeDuPret < 1 || $anneeDuPret > $pret['duree']) {
-      return 0;
-    }
-
-    // Calculate annual payment with interest and insurance
-    $montantAnnuel = $pret['montant'] / $pret['duree'];
-    $interetAnnuel = ($pret['montant'] * $type_pret['taux_interet'] / 100);
-    $assuranceAnnuelle = ($pret['montant'] * ($type_pret['taux_assurance'] ?? 0) / 100);
-
-    return $montantAnnuel + $interetAnnuel + $assuranceAnnuelle;
-  }
-
   public static function getMontantAPayer($pretId) {
     $pret = self::getById($pretId);
-    $type_pret = TypePrets::getById($pret['type_pret_id']);
+    if (!$pret) {
+      return [];
+    }
+    
+    // Get type_pret information
+    $db = getDB();
+    $stmt = $db->prepare("SELECT * FROM s4_type_prets WHERE id = ?");
+    $stmt->execute([$pret['type_pret_id']]);
+    $type_pret = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if (!$pret || !$type_pret)
-      return null;
+    if (!$type_pret) {
+      return [];
+    }
 
     $dateAcceptation = new \DateTime($pret['date_acceptation']);
     $anneeDebut = $dateAcceptation->format('Y');
@@ -146,7 +129,11 @@ class Prets
       $dateEcheance->setDate($anneeActuelle, $dateAcceptation->format('m'), $dateAcceptation->format('d'));
       
       $montant = self::getMontantAPayerByMoisAnnee($pretId, $dateAcceptation->format('m'), $anneeActuelle);
-      $payer = PretRetourHistoriques::isPayerAnnuel($pretId, $anneeActuelle);
+      
+      // Check if payment exists for this year
+      $stmt = $db->prepare("SELECT * FROM s4_pret_retour_historiques WHERE pret_id = ? AND YEAR(date_retour) = ?");
+      $stmt->execute([$pretId, $anneeActuelle]);
+      $payer = $stmt->fetch(PDO::FETCH_ASSOC);
       
       $result[] = [
         'annee_numero' => $anneeIndex + 1,
@@ -158,6 +145,41 @@ class Prets
     }
     
     return $result;
+  }
+
+  public static function getMontantAPayerByMoisAnnee($pretId, $mois, $annee)
+  {
+    $pret = self::getById($pretId);
+    if (!$pret) {
+      return 0;
+    }
+    
+    // Get type_pret information
+    $db = getDB();
+    $stmt = $db->prepare("SELECT * FROM s4_type_prets WHERE id = ?");
+    $stmt->execute([$pret['type_pret_id']]);
+    $type_pret = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$type_pret) {
+      return 0;
+    }
+
+    $dateAcceptation = new \DateTime($pret['date_acceptation']);
+    
+    // Calculate the year number from loan start (1-based)
+    $anneeDuPret = $annee - $dateAcceptation->format('Y') + 1;
+    
+    // Check if this year is within the loan period
+    if ($anneeDuPret < 1 || $anneeDuPret > $pret['duree']) {
+      return 0;
+    }
+
+    // Calculate annual payment with interest and insurance
+    $montantAnnuel = $pret['montant'] / $pret['duree'];
+    $interetAnnuel = ($pret['montant'] * $type_pret['taux_interet'] / 100) / $pret['duree'];
+    $assuranceAnnuelle = ($pret['montant'] * ($type_pret['taux_assurance'] ?? 0) / 100) / $pret['duree'];
+
+    return $montantAnnuel + $interetAnnuel + $assuranceAnnuelle;
   }
 
   public static function findByMoisAnnee($mois1, $annee1, $mois2 = null, $annee2 = null) {

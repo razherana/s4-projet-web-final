@@ -159,7 +159,7 @@ class ClientController
       $result = $this->apiCall('/prets', 'POST', $loanData);
       
       if ($result && !isset($result['error'])) {
-        $this->app->redirect('/client/loans?success=loan_created');
+        $this->app->redirect('/client/simulate?success=loan_created');
       } else {
         $this->app->redirect('/client/simulate?error=loan_creation_failed');
       }

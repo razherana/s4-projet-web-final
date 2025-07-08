@@ -13,6 +13,7 @@ use app\controllers\PretsController;
 use app\controllers\PretRetourHistoriquesController;
 use app\controllers\UsersController;
 use app\controllers\FondHistoriquesController;
+use app\controllers\PdfExportController;
 
 /** 
  * @var Router $router 
@@ -118,3 +119,6 @@ $router->put('/fond-historiques/@id', [FondHistoriquesController::class, 'update
 $router->delete('/fond-historiques/@id', [FondHistoriquesController::class, 'delete']);
 $router->get('/fond-historiques/create', [FondHistoriquesController::class, 'create']);
 $router->post('/fond-historiques/create', [FondHistoriquesController::class, 'store']);
+
+// PDF Export routes
+$router->get('/export/loan/@id/payments', [PdfExportController::class, 'exportLoanPayments']);

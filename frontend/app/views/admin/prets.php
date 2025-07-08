@@ -110,9 +110,18 @@
                 <i class="fas fa-times"></i>
                 Refuser
               </button>
+            <?php elseif ($pret['date_acceptation']): ?>
+              <button class="loan-btn info" onclick="showLoanDetails(<?= json_encode($pret) ?>)">
+                <i class="fas fa-eye"></i>
+                Voir Paiements
+              </button>
+              <button class="loan-btn export" onclick="exportLoanPayments(<?= $pret['id'] ?>)">
+                <i class="fas fa-file-pdf"></i>
+                Export PDF
+              </button>
             <?php else: ?>
               <span class="status-text">
-                <?= $pret['date_acceptation'] ? 'Approuvé le ' . date('d/m/Y', strtotime($pret['date_acceptation'])) : 'Refusé le ' . date('d/m/Y', strtotime($pret['date_refus'])) ?>
+                Refusé le <?= date('d/m/Y', strtotime($pret['date_refus'])) ?>
               </span>
             <?php endif; ?>
           </div>
@@ -282,6 +291,21 @@
   color: white;
 }
 
+.action-btn.secondary {
+  background: #E5E7EB;
+  color: var(--text-secondary);
+}
+
+.action-btn.success {
+  background: linear-gradient(135deg, var(--accent-color), #059669);
+  color: white;
+}
+
+.action-btn.warning {
+  background: linear-gradient(135deg, #EF4444, #DC2626);
+  color: white;
+}
+
 .action-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -432,6 +456,16 @@
 
 .loan-btn.reject {
   background: linear-gradient(135deg, #EF4444, #DC2626);
+  color: white;
+}
+
+.loan-btn.export {
+  background: linear-gradient(135deg, #F59E0B, #D97706);
+  color: white;
+}
+
+.loan-btn.info {
+  background: linear-gradient(135deg, var(--secondary-color), #4F46E5);
   color: white;
 }
 
@@ -754,6 +788,9 @@
 }
 </style>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
 <script>
 let selectedClient = null;
 let loanData = null;
@@ -922,6 +959,175 @@ function updateLoanStatus(loanId, action) {
     console.error('Error:', error);
     alert('Erreur lors de la mise à jour');
   });
+}
+
+function exportClientReport(client) {
+  if (!client || !client.id) {
+    alert('Client non sélectionné');
+    return;
+  }
+  
+  // Open PDF in new window
+  const exportUrl = '<?= route('/export/client') ?>/' + client.id;
+  window.open(exportUrl, '_blank');
+}
+
+async function exportLoanPayments(loanId) {
+  if (!loanId) {
+    alert('ID du prêt manquant');
+    return;
+  }
+  
+  if (!confirm('Exporter les paiements de ce prêt en PDF ?')) {
+    return;
+  }
+  
+  // Show loading state
+  const btn = event.target.closest('.loan-btn');
+  const originalContent = btn.innerHTML;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Export...';
+  btn.disabled = true;
+  
+  try {
+    // Get loan data from API
+    const response = await fetch(`<?= $config['api']['base_url'] ?>/prets/${loanId}/payment-data`);
+    const data = await response.json();
+    
+    if (data.error) {
+      throw new Error(data.error);
+    }
+    
+    // Generate PDF using jsPDF
+    await generateClientSidePDF(data, loanId);
+    
+    // Reset button
+    btn.innerHTML = originalContent;
+    btn.disabled = false;
+    
+  } catch (error) {
+    console.error('Export error:', error);
+    alert('Erreur lors de l\'export PDF: ' + error.message);
+    
+    // Reset button
+    btn.innerHTML = originalContent;
+    btn.disabled = false;
+  }
+}
+
+async function generateClientSidePDF(data, loanId) {
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF('p', 'mm', 'a4');
+  
+  const loan = data.loan;
+  const schedule = data.schedule;
+  const payments = data.payments;
+  
+  // Set font
+  pdf.setFont('helvetica');
+  
+  // Header
+  pdf.setFontSize(20);
+  pdf.setTextColor(59, 130, 246);
+  pdf.text('RELEVÉ DE PAIEMENTS', 105, 20, { align: 'center' });
+  
+  pdf.setFontSize(12);
+  pdf.setTextColor(100, 100, 100);
+  pdf.text(`Prêt N° ${loanId.toString().padStart(6, '0')}`, 105, 30, { align: 'center' });
+  pdf.text(`Généré le ${new Date().toLocaleDateString('fr-FR')}`, 105, 37, { align: 'center' });
+  
+  // Loan Information
+  let yPos = 50;
+  pdf.setFontSize(14);
+  pdf.setTextColor(59, 130, 246);
+  pdf.text('Informations du Prêt', 20, yPos);
+  
+  yPos += 10;
+  pdf.setFontSize(10);
+  pdf.setTextColor(0, 0, 0);
+  
+  const loanInfo = [
+    [`Client: ${loan.client_nom} ${loan.client_prenom}`, `Email: ${loan.client_email}`],
+    [`Type: ${loan.type_pret_nom}`, `Taux: ${loan.taux_interet}%`],
+    [`Montant: ${loan.montant.toLocaleString('fr-FR')} Ar`, `Durée: ${loan.duree} an(s)`],
+    [`Création: ${new Date(loan.date_creation).toLocaleDateString('fr-FR')}`, 
+     `Approbation: ${loan.date_acceptation ? new Date(loan.date_acceptation).toLocaleDateString('fr-FR') : 'En attente'}`]
+  ];
+  
+  loanInfo.forEach(row => {
+    pdf.text(row[0], 20, yPos);
+    pdf.text(row[1], 110, yPos);
+    yPos += 7;
+  });
+  
+  // Payment Schedule Table
+  yPos += 10;
+  pdf.setFontSize(14);
+  pdf.setTextColor(59, 130, 246);
+  pdf.text('Calendrier des Paiements', 20, yPos);
+  
+  yPos += 10;
+  
+  // Table headers
+  pdf.setFontSize(9);
+  pdf.setTextColor(255, 255, 255);
+  pdf.setFillColor(59, 130, 246);
+  pdf.rect(20, yPos - 5, 170, 8, 'F');
+  
+  pdf.text('Année', 22, yPos);
+  pdf.text('Date', 42, yPos);
+  pdf.text('Montant', 72, yPos);
+  pdf.text('Statut', 102, yPos);
+  pdf.text('Payé le', 132, yPos);
+  pdf.text('Montant', 162, yPos);
+  
+  yPos += 8;
+  
+  // Table rows
+  pdf.setTextColor(0, 0, 0);
+  const paymentsLookup = {};
+  payments.forEach(payment => {
+    paymentsLookup[payment.payment_year] = payment;
+  });
+  
+  schedule.forEach((item, index) => {
+    const yearNumber = index + 1;
+    const actualPayment = paymentsLookup[item.annee];
+    const isPaid = item.isPayer || actualPayment;
+    
+    // Alternate row colors
+    if (index % 2 === 0) {
+      pdf.setFillColor(248, 249, 250);
+      pdf.rect(20, yPos - 5, 170, 7, 'F');
+    }
+    
+    pdf.text(`Année ${yearNumber}`, 22, yPos);
+    pdf.text(new Date(item.date_echeance).toLocaleDateString('fr-FR'), 42, yPos);
+    pdf.text(`${item.montant.toLocaleString('fr-FR')} Ar`, 72, yPos);
+    pdf.text(isPaid ? 'Payé' : 'En attente', 102, yPos);
+    pdf.text(actualPayment ? new Date(actualPayment.date_retour).toLocaleDateString('fr-FR') : '-', 132, yPos);
+    pdf.text(actualPayment ? `${actualPayment.montant.toLocaleString('fr-FR')} Ar` : '-', 162, yPos);
+    
+    yPos += 7;
+    
+    // Add new page if needed
+    if (yPos > 270) {
+      pdf.addPage();
+      yPos = 20;
+    }
+  });
+  
+  // Footer
+  pdf.setFontSize(8);
+  pdf.setTextColor(100, 100, 100);
+  pdf.text('FinanceAdmin - Système de Gestion des Prêts', 105, 285, { align: 'center' });
+  
+  // Download PDF
+  pdf.save(`paiements_pret_${loanId}.pdf`);
+}
+
+function showLoanDetails(loan) {
+  // Show loan details modal or redirect to details page
+  window.location.href = '<?= route('/admin/clients') ?>?client_id=' + loan.client_id + '&loan_id=' + loan.id;
 }
 
 // Close modals when clicking outside

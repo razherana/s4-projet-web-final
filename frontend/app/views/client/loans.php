@@ -268,9 +268,14 @@
           <i class="fas fa-money-bill-wave"></i>
           <span id="modalLoanTitle">Paiements - Prêt #</span>
         </div>
-        <button class="modal-close" onclick="closePaymentsModal()">
-          <i class="fas fa-times"></i>
-        </button>
+        <div class="modal-actions">
+          <button class="modal-action-btn" onclick="exportCurrentLoanPayments()" id="exportBtn">
+            <i class="fas fa-file-pdf"></i>
+          </button>
+          <button class="modal-close" onclick="closePaymentsModal()">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
       </div>
       
       <div class="modal-body">
@@ -915,6 +920,32 @@
   gap: 1.5rem;
 }
 
+/* Modal Actions */
+.modal-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.modal-action-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.modal-action-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
+}
+
 /* Loan Summary in Modal */
 .loan-summary {
   background: #F8FAFC;
@@ -1041,8 +1072,11 @@
 }
 </style>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
 <script>
 let allLoans = <?= json_encode($prets) ?>;
+let currentLoanForExport = null;
 
 // Basic filter functionality
 function applyFilters() {
@@ -1115,6 +1149,7 @@ function resetFilters() {
 
 // Modal functions
 function showLoanPayments(loan) {
+  currentLoanForExport = loan;
   document.getElementById('modalLoanTitle').textContent = `Paiements - Prêt #${loan.id}`;
   document.getElementById('paymentsModal').style.display = 'flex';
   document.body.style.overflow = 'hidden';
@@ -1220,23 +1255,48 @@ function updateTable(schedule, payments, loan) {
   document.getElementById('paymentsTableContent').innerHTML = html + '</tbody></table>';
 }
 
+function exportCurrentLoanPayments() {
+  if (!currentLoanForExport) {
+    alert('Aucun prêt sélectionné pour l\'export');
+    return;
+  }
+  
+  if (!confirm('Exporter les paiements de ce prêt en PDF ?')) {
+    return;
+  }
+  
+  const btn = document.getElementById('exportBtn');
+  const originalContent = btn.innerHTML;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+  btn.disabled = true;
+  
+  try {
+    const a = document.createElement('a');
+    a.download = "export.pdf";
+    a.href = '<?= route('/export/loan') ?>/' + currentLoanForExport.id + '/payments';
+    a.click();
+    
+    // Reset button after a delay
+    setTimeout(() => {
+      btn.innerHTML = originalContent;
+      btn.disabled = false;
+    }, 2000);
+    
+  } catch (error) {
+    console.error('Export error:', error);
+    alert('Erreur lors de l\'export PDF: ' + error.message);
+    
+    // Reset button
+    btn.innerHTML = originalContent;
+    btn.disabled = false;
+  }
+}
+
 // Event listeners
 document.addEventListener('DOMContentLoaded', function() {
   // Auto-hide alerts
   document.querySelectorAll('.alert-dismissible').forEach(alert => {
     setTimeout(() => alert.querySelector('.btn-close')?.click(), 5000);
   });
-  
-  // Filter listeners
-  ['searchInput', 'statusFilter', 'amountFilter', 'sortFilter'].forEach(id => {
-    document.getElementById(id).addEventListener(id === 'searchInput' ? 'input' : 'change', applyFilters);
-  });
-});
-
-// Escape key closes modal
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape' && document.getElementById('paymentsModal').style.display !== 'none') {
-    closePaymentsModal();
-  }
 });
 </script>
