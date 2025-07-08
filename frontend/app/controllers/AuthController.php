@@ -98,10 +98,10 @@ class AuthController
     $this->app->redirect('/login?success=logged_out');
   }
 
-  public static function requireAuth()
+  public static function requireClient()
   {
     
-    if (!isset($_SESSION['user'])) {
+    if (!isset($_SESSION['user']) || $_SESSION['user']['user_id'] === 1) {
       header('Location: /login');
       exit;
     }

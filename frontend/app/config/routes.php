@@ -65,7 +65,7 @@ $router->group('/client', function() use ($router, $app) {
   $router->post('/loans', [ClientController::class, 'processPayment']);
   $router->get('/simulate', [ClientController::class, 'simulate']);
   $router->post('/loans/create', [ClientController::class, 'createLoan']);
-}, [AuthController::class, 'requireAuth']);
+}, [AuthController::class, 'requireClient']);
 
 // Fonds routes
 $router->get('/fonds', [FondsController::class, 'list']);
