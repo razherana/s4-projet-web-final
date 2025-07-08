@@ -14,6 +14,8 @@ use app\controllers\PretRetourHistoriquesController;
 use app\controllers\UsersController;
 use app\controllers\FondHistoriquesController;
 use app\controllers\PdfExportController;
+use app\middlewares\AdminMiddleware;
+use app\middlewares\ClientMiddleware;
 
 /** 
  * @var Router $router 
@@ -29,7 +31,7 @@ $router->get('/logout', [AuthController::class, 'logout']);
 $router->get('/', function () use ($app) {
   
   if (isset($_SESSION['user'])) {
-    if ($_SESSION['user']['role'] === 'admin') {
+    if ($_SESSION['user']['user_id'] === 1) {
       $app->redirect('/admin/dashboard');
     } else {
       $app->redirect('/client/dashboard');
@@ -53,7 +55,7 @@ $router->group('/admin', function() use ($router, $app) {
   $router->post('/clients/payment', [AdminController::class, 'processPayment']);
   $router->get('/fonds', [AdminController::class, 'fonds']);
   $router->get('/settings', [AdminController::class, 'settings']);
-}, [AuthController::class, 'requireAdmin']);
+}, [AdminMiddleware::class]);
 
 // Protected client routes
 $router->group('/client', function() use ($router, $app) {
@@ -65,7 +67,7 @@ $router->group('/client', function() use ($router, $app) {
   $router->post('/loans', [ClientController::class, 'processPayment']);
   $router->get('/simulate', [ClientController::class, 'simulate']);
   $router->post('/loans/create', [ClientController::class, 'createLoan']);
-}, [AuthController::class, 'requireClient']);
+}, [ClientMiddleware::class]);
 
 // Fonds routes
 $router->get('/fonds', [FondsController::class, 'list']);

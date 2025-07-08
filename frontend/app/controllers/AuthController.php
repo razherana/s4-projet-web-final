@@ -39,12 +39,6 @@ class AuthController
 
   public function showLogin()
   {
-    // If already logged in, redirect to dashboard
-    if (isset($_SESSION['user'])) {
-      $this->app->redirect('/admin/dashboard');
-      return;
-    }
-
     $content = $this->app->view()->fetch('auth/login', []);
 
     $this->app->view()->render('auth/layout', [
@@ -96,23 +90,5 @@ class AuthController
     
     session_destroy();
     $this->app->redirect('/login?success=logged_out');
-  }
-
-  public static function requireClient()
-  {
-    
-    if (!isset($_SESSION['user']) || $_SESSION['user']['user_id'] === 1) {
-      header('Location: /login');
-      exit;
-    }
-  }
-
-  public static function requireAdmin()
-  {
-    
-    if (!isset($_SESSION['user']) || $_SESSION['user']['user_id'] !== 1) {
-      header('Location: /login');
-      exit;
-    }
   }
 }
