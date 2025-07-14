@@ -1,4 +1,4 @@
--- Active: 1739989451833@@127.0.0.1@3306@s4_exam_web
+-- Active: 1750214082868@@127.0.0.1@3306@s4_exam_web
 CREATE TABLE `s4_fonds` (
     `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `montant_initial` FLOAT(53) NOT NULL,
@@ -63,3 +63,9 @@ CREATE TABLE `s4_fond_historiques` (
     `est_sortie` BOOLEAN NOT NULL DEFAULT 1,
     `date` DATETIME NOT NULL DEFAULT NOW()
 );
+
+ALTER TABLE s4_type_prets 
+    ADD COLUMN taux_assurance double COMMENT '';
+
+ALTER TABLE s4_prets 
+    ADD COLUMN delai INT DEFAULT 0 COMMENT '';
